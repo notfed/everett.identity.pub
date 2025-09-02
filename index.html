@@ -322,10 +322,8 @@ body, html {
 
 <script>
 // Global Constants
-const YOU_SYMBOL = '𖨆';
 const TIMEOUT_MS = 500; // Timeout after 500ms
 const MAX_TIME_HEIGHT = 256; // Maximum allowed time height value
-const MOUSE_LINE_FONT_SIZE = 24; // Font size for mouse line symbol
 const MOUSE_SYMBOL_Y_OFFSET = 96; // X offset for mouse symbol positioning
 const HELP_POPUP_PROTECTION_DELAY = 500; // Delay before help popup can be dismissed (ms)
 console.log('HELP_POPUP_PROTECTION_DELAY constant defined as:', HELP_POPUP_PROTECTION_DELAY);
@@ -352,6 +350,10 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const foregroundCanvas = document.getElementById('foreground-canvas');
 const foregroundCtx = foregroundCanvas.getContext('2d');
+
+// Load the cursor icon
+const cursorIcon = new Image();
+cursorIcon.src = 'you_symbol.svg';
 
 // Double-buffering setup
 const bufferCanvas = document.createElement('canvas');
@@ -1141,14 +1143,6 @@ function drawMouseLineOnForeground() {
 function drawMouseLine(margin, availableWidth, availableHeight, rowHeight) {
     // Reset context state to ensure clean drawing
     foregroundCtx.save();
-    
-    // Prepare symbol first so we can reserve space for it
-    const symbol = YOU_SYMBOL;
-    const fontSizePx = MOUSE_LINE_FONT_SIZE;
-    foregroundCtx.font = `bold ${fontSizePx}px Arial`;
-    foregroundCtx.textAlign = 'center';
-    foregroundCtx.textBaseline = 'middle';
-    foregroundCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
 
     // Ensure the line is always visible by clamping coordinates to canvas bounds
     const clampedMouseX = Math.max(0, Math.min(mouseX, foregroundCanvas.width));
@@ -1168,8 +1162,13 @@ function drawMouseLine(margin, availableWidth, availableHeight, rowHeight) {
     foregroundCtx.stroke();
     foregroundCtx.setLineDash([]); // Reset line dash
 
-    // Draw the symbol at the cursor position (clamped to canvas bounds)
-    foregroundCtx.fillText(symbol, clampedMouseX, clampedMouseY);
+    // Draw the cursor icon at the cursor position (clamped to canvas bounds)
+    if (cursorIcon.complete) {
+        const iconSize = 32;
+        const iconX = clampedMouseX - iconSize / 2;
+        const iconY = clampedMouseY - iconSize / 2;
+        foregroundCtx.drawImage(cursorIcon, iconX, iconY, iconSize, iconSize);
+    }
     
     // Restore context state
     foregroundCtx.restore();

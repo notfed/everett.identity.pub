@@ -916,12 +916,7 @@ function showHelpPopup() {
     mouseX = canvas.width / 2 - MOUSE_SYMBOL_Y_OFFSET;
     mouseY = canvas.height / 2;
     
-    // Set initial cursor time based on Y position
-    const margin = 0;
-    const availableHeight = canvas.height - 2 * margin;
-    const rowHeight = availableHeight / H;
-    const cursorRow = Math.floor((mouseY - margin) / rowHeight);
-    cursorTime = Math.max(1, Math.min(MAX_TIME_HEIGHT, cursorRow + 1));
+
     
     drawMouseLineOnForeground();
     

@@ -279,7 +279,7 @@ body, html {
 </style>
 </head>
 <body>
-    <div class="popup-container" style="display: none">
+    <div class="popup-container" style="display: block">
       <div id="stats-container" class="stats-container" style="margin-left: 20px;">
         <h3>Branch ratios</h3>
         <div id="stats-branch-ratio-items"></div>
@@ -290,8 +290,8 @@ body, html {
           <span id="stats-cursor-time">17</span>
         </div>
       </div>
-      <div class="input-container">
-                  <label>Branch ratios (comma separated):</label><input type="text" id="branchRatios" value="1,2" style="width: 100px;">
+      <div class="input-container" style="display: none">
+                  <label>Branch ratios (comma separated):</label><input type="text" id="branchRatios" value="0.5,0.5" style="width: 100px;">
         <label>Max Time:</label><input type="number" id="maxTime" min="1" max="256" style="width: 60px;">
         <div class="sort-button-container">
           <div class="sort-tooltip">This is just to visually show that branch ratios are conserved over time.</div>
@@ -340,7 +340,7 @@ const TOTAL_ROWS = 128; // Total rows to show (10 normal + 118 compressed)
 const MOUSE_SYMBOL_Y_OFFSET = 96; // X offset for mouse symbol positioning
 const HELP_POPUP_PROTECTION_DELAY = 500; // Delay before help popup can be dismissed (ms)
 console.log('HELP_POPUP_PROTECTION_DELAY constant defined as:', HELP_POPUP_PROTECTION_DELAY);
-let branchRatios = [1, 1]; // Updated via input
+let branchRatios = [0.5, 0.5]; // Updated via input - normalized and rounded to 0.05 increments
 let maxTime = 21; // Updated via input
 let currentTimeout = null;
 let timeoutOccurred = false;
@@ -509,6 +509,7 @@ function setMaxTime(value) {
 // Set branchRatios and update the input field
 function setBranchRatios(values) {
     branchRatios = values;
+    document.getElementById('branchRatios').value = values.join(',');
 }
 
 // Calculate row height based on row index
@@ -537,6 +538,9 @@ function init() {
     // Initialize input values from global variables
     document.getElementById('maxTime').value = maxTime;
     setBranchRatios(branchRatios);
+    
+    // Update stats display
+    updateStats();
     
     // Set mouse coordinates to center of screen and draw the line
     mouseX = canvas.width / 2 - MOUSE_SYMBOL_Y_OFFSET;
@@ -1161,7 +1165,16 @@ function handleKeyDown(event) {
         case 'ArrowRight':
             event.preventDefault();
             // Add a new branch with value 1
-            const newRatios = [...branchRatios, 1];
+            let newRatios = [...branchRatios, 1];
+            
+            // Normalize and round all ratios to nearest 0.05 increment
+            const total = newRatios.reduce((sum, ratio) => sum + ratio, 0);
+            newRatios = newRatios.map(ratio => {
+                const normalized = ratio / total;
+                // Round to nearest 0.05 increment
+                return Math.round(normalized / 0.05) * 0.05;
+            });
+            
             setBranchRatios(newRatios);
             updateSimulation();
             break;
@@ -1570,34 +1583,59 @@ function handleWallDrag(newX) {
     const availableWidth = canvas.width - 2 * margin;
     const rowCells = tree[0];
     
-    // Calculate the current total width using Decimal
-    let totalWidth = Decimal(0);
-    for (let cell of rowCells) {
-        totalWidth = totalWidth.plus(Decimal(cell.width));
-    }
-    
     // Calculate the new position for the dragged wall using Decimal
     const newWallPosition = Decimal(newX - margin).dividedBy(availableWidth);
     
-    // Quantize to 5% increments (0.05) and clamp to 5% - 95% bounds using Decimal
+    // Round to the nearest 5% increment (0.05) and clamp to 5% - 95% bounds using Decimal
     const quantizedPosition = newWallPosition.dividedBy(Decimal(0.05)).round().times(Decimal(0.05));
     const clampedPosition = Decimal.max(Decimal(0.05), Decimal.min(Decimal(0.95), quantizedPosition));
+    
+    // Get the current ratios as Decimal objects
+    const currentRatios = rowCells.map(cell => Decimal(cell.width));
+    
+    // Calculate the cumulative position up to the dragged wall
+    let cumulativeBeforeWall = Decimal(0);
+    for (let i = 0; i < draggedWallIndex; i++) {
+        cumulativeBeforeWall = cumulativeBeforeWall.plus(currentRatios[i]);
+    }
+    
+    // Calculate the cumulative position after the dragged wall
+    let cumulativeAfterWall = Decimal(0);
+    for (let i = draggedWallIndex + 2; i < currentRatios.length; i++) {
+        cumulativeAfterWall = cumulativeAfterWall.plus(currentRatios[i]);
+    }
+    
+    // Calculate collision boundaries
+    const minWallPosition = cumulativeBeforeWall.plus(Decimal(0.05)); // Can't go past previous wall + 5%
+    const maxWallPosition = Decimal(1).minus(cumulativeAfterWall).minus(Decimal(0.05)); // Can't go past next wall - 5%
+    
+    // Clamp to collision boundaries and global bounds
+    let finalPosition = Decimal.max(
+        Decimal(0.05), 
+        Decimal.min(
+            Decimal(0.95), 
+            Decimal.max(minWallPosition, Decimal.min(maxWallPosition, clampedPosition))
+        )
+    );
+    
+    // Ensure the final position is also rounded to the nearest 0.05 increment
+    finalPosition = finalPosition.dividedBy(Decimal(0.05)).round().times(Decimal(0.05));
     
     // Calculate new branch ratios using Decimal
     const newRatios = [];
     let accumulatedWidth = Decimal(0);
     
-    for (let i = 0; i < rowCells.length; i++) {
+    for (let i = 0; i < currentRatios.length; i++) {
         if (i === draggedWallIndex) {
             // This is the cell before the dragged wall
-            newRatios.push(clampedPosition.minus(accumulatedWidth).toNumber());
+            newRatios.push(finalPosition.minus(accumulatedWidth).toNumber());
         } else if (i === draggedWallIndex + 1) {
             // This is the cell after the dragged wall
-            const remainingWidth = totalWidth.minus(clampedPosition);
+            const remainingWidth = Decimal(1).minus(finalPosition).minus(cumulativeAfterWall);
             newRatios.push(remainingWidth.toNumber());
         } else {
             // Keep other cells the same
-            newRatios.push(rowCells[i].width);
+            newRatios.push(currentRatios[i].toNumber());
         }
         
         if (i <= draggedWallIndex) {

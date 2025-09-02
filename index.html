@@ -190,7 +190,7 @@ body, html {
     font-size: 13px;
 }
 
-.legend-item {
+.stats-branch-ratio-item {
     display: flex;
     align-items: center;
     margin-bottom: 4px;
@@ -208,7 +208,7 @@ body, html {
     color: white;
 }
 
-.frequency-item {
+.stats-frequency-item {
     display: flex;
     align-items: center;
     margin-bottom: 4px;
@@ -273,12 +273,12 @@ body, html {
     <div class="popup-container">
       <div id="stats-container" class="stats-container" style="margin-left: 20px;">
         <h3>Branch ratios</h3>
-        <div id="legend-items"></div>
+        <div id="stats-branch-ratio-items"></div>
         <h3>Your Frequency</h3>
-        <div id="frequency-items"></div>
+        <div id="stats-frequency-items"></div>
         <h3>Your Time</h3>
         <div style="color: white; font-family: Arial, sans-serif; font-size: 14px;">
-          <span id="cursor-time-display">17</span>
+          <span id="stats-cursor-time">17</span>
         </div>
       </div>
       <div class="input-container">
@@ -581,7 +581,7 @@ async function updateSimulation() {
     // Update probability display after simulation completes (for height changes)
     if (mouseX !== null && mouseY !== null && tree && tree.length > 0 && maxTime > 0) {
         const availableWidth = canvas.width;
-        updateBranchStatsBasedOnCursor(availableWidth);
+        calculateAndUpdateStats(availableWidth);
     }
     
 
@@ -609,8 +609,8 @@ async function drawSimulationAsync() {
     bufferCtx.font = 'bold 16px Arial';
     bufferCtx.textAlign = 'center';
     
-    // Update legend
-    updateLegend();
+    // Update stats
+    updateStats();
     
     // Start asynchronous tree generation and drawing
     await generateTreeAsync(totalWeight, margin, availableWidth, availableHeight, rowHeight);
@@ -837,13 +837,13 @@ function generateTree() {
 }
 
 // Update color legend
-function updateLegend() {
-    const legendItems = document.getElementById('legend-items');
+function updateStats() {
+    const legendItems = document.getElementById('stats-branch-ratio-items');
     legendItems.innerHTML = '';
     
     for (let i = 0; i < Math.min(branchRatios.length, colors.length); i++) {
         const legendItem = document.createElement('div');
-        legendItem.className = 'legend-item';
+        legendItem.className = 'stats-branch-ratio-item';
         
         const colorBox = document.createElement('div');
         colorBox.className = 'legend-color';
@@ -862,8 +862,8 @@ function updateLegend() {
 
 
 // Update frequency display with raw branch counts and percentages
-function updateFrequency(branches) {
-    const frequencyItems = document.getElementById('frequency-items');
+function updateStatsFrequency(branches) {
+    const frequencyItems = document.getElementById('stats-frequency-items');
     frequencyItems.innerHTML = '';
     
     if (!branches || branches.length === 0) {
@@ -886,7 +886,7 @@ function updateFrequency(branches) {
     // Display frequencies with percentages
     for (let i = 0; i < branchRatios.length; i++) {
         const frequencyItem = document.createElement('div');
-        frequencyItem.className = 'frequency-item';
+        frequencyItem.className = 'stats-frequency-item';
         
         const colorBox = document.createElement('div');
         colorBox.className = 'legend-color';
@@ -1125,7 +1125,7 @@ function drawMouseLineOnForeground() {
         // Only calculate arc if tree exists and mouse is within table bounds (for tree-related calculations)
         if (tree && maxTime > 0 && mouseX >= margin && mouseX <= margin + availableWidth &&
             mouseY >= margin && mouseY <= margin + availableHeight) {
-            updateBranchStatsBasedOnCursor(availableWidth);
+            calculateAndUpdateStats(availableWidth);
         }
     }
 }
@@ -1184,10 +1184,10 @@ const computeLocalBranchBounds = (branchingWeights) => {
 }
 
 // Calculate and log the arc
-function updateBranchStatsBasedOnCursor(availableWidth) {
+function calculateAndUpdateStats(availableWidth) {
 
   // Update the cursor time display
-  const cursorTimeElement = document.getElementById('cursor-time-display');
+  const cursorTimeElement = document.getElementById('stats-cursor-time');
   if (cursorTimeElement) {
       cursorTimeElement.textContent = cursorTime;
   }
@@ -1233,8 +1233,7 @@ function updateBranchStatsBasedOnCursor(availableWidth) {
       parentMaxBound = maxBound;
   }
 
-  // Update the on-screen displays
-  updateFrequency(branches);
+  updateStatsFrequency(branches);
 
   return branches
 

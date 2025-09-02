@@ -497,6 +497,14 @@ function setBranchRatios(values) {
     branchRatios = values;
 }
 
+// Clear current timeout and reset the variable
+function clearCurrentTimeout() {
+    if (currentTimeout) {
+        clearTimeout(currentTimeout);
+        currentTimeout = null;
+    }
+}
+
 
 
 // Initialize simulation
@@ -513,10 +521,7 @@ function init() {
 // Update simulation based on current input values
 async function updateSimulation() {
     // Cancel any currently running operation
-    if (currentTimeout) {
-        clearTimeout(currentTimeout);
-        currentTimeout = null;
-    }
+    clearCurrentTimeout();
     
     // Cancel any ongoing simulation
     simulationCancelled = true;
@@ -647,10 +652,7 @@ async function generateNextRowAsync(localTree, currentRow, totalWeight, margin, 
             drawTimeoutIndicator();
         }
         
-        if (currentTimeout) {
-            clearTimeout(currentTimeout);
-            currentTimeout = null;
-        }
+        clearCurrentTimeout();
         
 
         
@@ -1400,10 +1402,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setBranchRatios(newRatios);
         }
         // Cancel any currently running operation immediately
-        if (currentTimeout) {
-            clearTimeout(currentTimeout);
-            currentTimeout = null;
-        }
+        clearCurrentTimeout();
         // Start new computation
         updateSimulation();
     });
@@ -1412,10 +1411,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update the maxTime variable when input changes
         setMaxTime(parseInt(maxTimeInput.value) || 1);
         // Cancel any currently running operation immediately
-        if (currentTimeout) {
-            clearTimeout(currentTimeout);
-            currentTimeout = null;
-        }
+        clearCurrentTimeout();
         // Start new computation
         updateSimulation();
     });

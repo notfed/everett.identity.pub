@@ -327,8 +327,8 @@ const MAX_TIME_HEIGHT = 256; // Maximum allowed time height value
 const MOUSE_SYMBOL_Y_OFFSET = 96; // X offset for mouse symbol positioning
 const HELP_POPUP_PROTECTION_DELAY = 500; // Delay before help popup can be dismissed (ms)
 console.log('HELP_POPUP_PROTECTION_DELAY constant defined as:', HELP_POPUP_PROTECTION_DELAY);
-let B = [1, 1];
-let maxTime = 17;
+let branchRatios = [1, 1]; // Updated via input
+let maxTime = 17; // Updated via input
 let currentTimeout = null;
 let timeoutOccurred = false;
 let simulationCancelled = false; // Flag to track if simulation was cancelled
@@ -504,7 +504,7 @@ function getBranchingWeights() {
 function init() {
     // Initialize input values from global variables
     document.getElementById('maxTime').value = maxTime;
-    document.getElementById('weights').value = B.join(',');
+    document.getElementById('weights').value = branchRatios.join(',');
     
 
     
@@ -538,11 +538,11 @@ async function updateSimulation() {
 
     
     // Get values using helper functions
-    B = getBranchingWeights();
+    branchRatios = getBranchingWeights();
     maxTime = getHeight();
     
     // If branching weight is 0, show zero rows
-    if (B.length === 1 && B[0] === 0) {
+    if (branchRatios.length === 1 && branchRatios[0] === 0) {
         maxTime = 0;
     }
     
@@ -578,7 +578,7 @@ async function updateSimulation() {
     if (mouseX !== null && mouseY !== null && tree && tree.length > 0 && maxTime > 0) {
         const margin = 0;
         const availableWidth = canvas.width - 2 * margin;
-        calculateAndLogArc(margin, availableWidth);
+        calculateCursorBranches(margin, availableWidth);
     }
     
 
@@ -599,7 +599,7 @@ async function drawSimulationAsync() {
     const rowHeight = availableHeight / maxTime;
     
     // Calculate total weight for normalization
-    const totalWeight = B.reduce((sum, weight) => sum + weight, 0);
+    const totalWeight = branchRatios.reduce((sum, weight) => sum + weight, 0);
     
     // Draw title first
     bufferCtx.fillStyle = '#333';
@@ -621,8 +621,8 @@ async function generateTreeAsync(totalWeight, margin, availableWidth, availableH
     // Skip the first row - start with what would have been the second row
     // Generate the first actual row (which was previously the second row)
     const firstRow = [];
-    for (let j = 0; j < B.length; j++) {
-        const weight = B[j] / totalWeight;
+    for (let j = 0; j < branchRatios.length; j++) {
+        const weight = branchRatios[j] / totalWeight;
         firstRow.push({
             width: weight,
             branchIndex: j
@@ -686,8 +686,8 @@ async function processCellsAsync(newRow, prevRow, totalWeight, currentRow, margi
         for (let i = cellIndex; i < endIndex; i++) {
             const cell = prevRow[i];
             // Split each cell according to branching weights
-            for (let j = 0; j < B.length; j++) {
-                const weight = B[j] / totalWeight;
+            for (let j = 0; j < branchRatios.length; j++) {
+                const weight = branchRatios[j] / totalWeight;
                 newRow.push({
                     width: cell.width * weight,
                     branchIndex: j
@@ -800,13 +800,13 @@ function drawGrayRows(startRow, margin, availableWidth, availableHeight, rowHeig
 // Generate the complete tree structure with proper weighted splitting
 function generateTree() {
     const tree = [];
-    const totalWeight = B.reduce((sum, weight) => sum + weight, 0);
+    const totalWeight = branchRatios.reduce((sum, weight) => sum + weight, 0);
     
     // Skip the first row - start with what would have been the second row
     // First row: split according to branching weights
     const firstRow = [];
-    for (let j = 0; j < B.length; j++) {
-        const weight = B[j] / totalWeight;
+    for (let j = 0; j < branchRatios.length; j++) {
+        const weight = branchRatios[j] / totalWeight;
         firstRow.push({
             width: weight,
             branchIndex: j
@@ -821,8 +821,8 @@ function generateTree() {
         
         for (let cell of prevRow) {
             // Split each cell according to branching weights
-            for (let i = 0; i < B.length; i++) {
-                const weight = B[i] / totalWeight;
+            for (let i = 0; i < branchRatios.length; i++) {
+                const weight = branchRatios[i] / totalWeight;
                 newRow.push({
                     width: cell.width * weight,
                     branchIndex: i
@@ -841,7 +841,7 @@ function updateLegend() {
     const legendItems = document.getElementById('legend-items');
     legendItems.innerHTML = '';
     
-    for (let i = 0; i < Math.min(B.length, colors.length); i++) {
+    for (let i = 0; i < Math.min(branchRatios.length, colors.length); i++) {
         const legendItem = document.createElement('div');
         legendItem.className = 'legend-item';
         
@@ -851,7 +851,7 @@ function updateLegend() {
         
         const label = document.createElement('span');
         label.className = 'legend-label';
-        label.textContent = `${B[i]}`;
+        label.textContent = `${branchRatios[i]}`;
         
         legendItem.appendChild(colorBox);
         legendItem.appendChild(label);
@@ -884,7 +884,7 @@ function updateFrequency(branches) {
     });
     
     // Display frequencies with percentages
-    for (let i = 0; i < B.length; i++) {
+    for (let i = 0; i < branchRatios.length; i++) {
         const frequencyItem = document.createElement('div');
         frequencyItem.className = 'frequency-item';
         
@@ -1129,7 +1129,7 @@ function drawMouseLineOnForeground() {
         // Only calculate arc if tree exists and mouse is within table bounds (for tree-related calculations)
         if (tree && maxTime > 0 && mouseX >= margin && mouseX <= margin + availableWidth &&
             mouseY >= margin && mouseY <= margin + availableHeight) {
-            calculateAndLogArc(margin, availableWidth);
+            calculateCursorBranches(margin, availableWidth);
         }
     }
 }
@@ -1188,7 +1188,7 @@ const computeLocalBranchBounds = (branchingWeights) => {
 }
 
 // Calculate and log the arc
-function calculateAndLogArc(margin, availableWidth) {
+function calculateCursorBranches(margin, availableWidth) {
 
   // Update the cursor time display
   const cursorTimeElement = document.getElementById('cursor-time-display');
@@ -1202,7 +1202,7 @@ function calculateAndLogArc(margin, availableWidth) {
   const globalCursorX = Decimal((mouseX - margin) / availableWidth).clamp(Decimal(0), Decimal(1));
 
   // The local branch bounds are basically X-coordinate of the set of edges after you successively split 
-  const localBranchBounds = computeLocalBranchBounds(B) // [Decimal(0), Decimal(1).dividedBy(3), Decimal(1)] // TODO: Calculate this from branchingWeights
+  const localBranchBounds = computeLocalBranchBounds(branchRatios) // [Decimal(0), Decimal(1).dividedBy(3), Decimal(1)] // TODO: Calculate this from branchingWeights
   const getBranchFromCursor = (localCursorX) => {
     if (localCursorX.lte(0)) return 0;
     if (localCursorX.gte(1)) return localBranchBounds.length - 2;
@@ -1243,7 +1243,7 @@ function calculateAndLogArc(margin, availableWidth) {
 //   console.log("branches = " + branches);
   
   // Log the frequencies of each branch
-  const branchFrequency = Array.from({ length: B.length }, (_, i) => 0);
+  const branchFrequency = Array.from({ length: branchRatios.length }, (_, i) => 0);
   branches.forEach(branch => {
     branchFrequency[branch]++;
   });

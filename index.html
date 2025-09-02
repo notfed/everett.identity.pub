@@ -286,7 +286,7 @@ body, html {
         <label>Max Time:</label><input type="number" id="maxTime" min="1" max="256" style="width: 60px;">
         <div class="sort-button-container">
           <div class="sort-tooltip">This is just to visually show that branch ratios are conserved over time.</div>
-          <button id="sortModeToggle" class="sort-toggle" style="display: none;">Sort Rows: OFF</button>
+          <button id="rowSortModeToggle" class="sort-toggle" style="display: none;">Sort Rows: OFF</button>
         </div>
       </div>
     <div style="width: 150px;"></div>
@@ -323,12 +323,13 @@ body, html {
 <script>
 // Global Constants
 const TIMEOUT_MS = 500; // Timeout after 500ms
+const MIN_MAX_TIME = 1; // Minimum allowed maxTime value
 const MAX_MAX_TIME = 256; // Maximum allowed maxTime value
 const MOUSE_SYMBOL_Y_OFFSET = 96; // X offset for mouse symbol positioning
 const HELP_POPUP_PROTECTION_DELAY = 500; // Delay before help popup can be dismissed (ms)
 console.log('HELP_POPUP_PROTECTION_DELAY constant defined as:', HELP_POPUP_PROTECTION_DELAY);
 let branchRatios = [1, 1]; // Updated via input
-let maxTime = 17; // Updated via input
+let maxTime = 21; // Updated via input
 let currentTimeout = null;
 let timeoutOccurred = false;
 let simulationCancelled = false; // Flag to track if simulation was cancelled
@@ -339,7 +340,7 @@ let isDragging = false; // Track if we're currently dragging
 let lockedX = null; // Store the locked X position during drag
 let tree = null; // Store the tree structure for arc calculation
 let rowsCompleted = 0; // Track how many rows have been completed
-let sortMode = false; // Track whether sort mode is enabled
+let rowSortMode = false; // Track whether "row sort" mode is enabled
 let originalTree = null; // Store the original unsorted tree structure
 let helpPopupProtected = true; // Flag to protect help popup for first 500ms
 console.log('Initial helpPopupProtected:', helpPopupProtected);
@@ -483,9 +484,13 @@ function getBranchColor(index) {
 
 // Get height with default value
 function getHeight() {
-    const maxTimeInput = document.getElementById('maxTime').value;
-    const height = parseInt(maxTimeInput);
-    return isNaN(height) || height <= 0 ? 1 : height;
+    return maxTime;
+}
+
+// Set maxTime and update the input field
+function setMaxTime(value) {
+    maxTime = value;
+    document.getElementById('maxTime').value = value;
 }
 
 // Get branching weights with default values
@@ -539,7 +544,7 @@ async function updateSimulation() {
     
     // Get values using helper functions
     branchRatios = getBranchingWeights();
-    maxTime = getHeight();
+    // maxTime is now bound to the input field, no need to get it from getHeight()
     
     // If branching weight is 0, show zero rows
     if (branchRatios.length === 1 && branchRatios[0] === 0) {
@@ -730,7 +735,7 @@ function drawRow(rowIndex, rowCells, margin, availableWidth, availableHeight, ro
     let currentX = margin;
     
     // If sort mode is enabled, sort the cells by branch index before drawing
-    const cellsToDraw = sortMode ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
+    const cellsToDraw = rowSortMode ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
     
     for (let cell of cellsToDraw) {
         const cellWidth = cell.width * availableWidth;
@@ -1051,37 +1056,33 @@ function handleMouseUp(event) {
 
 // Handle keyboard events
 function handleKeyDown(event) {
-    const maxTimeInput = document.getElementById('maxTime');
-    let currentHeight = parseInt(maxTimeInput.value) || 1;
-    // If key is held down, browser fires repeated keydown events with event.repeat = true
+    let currentHeight = maxTime;
+
+    // If key is held down, step by 4. Otherwise, step by 1
     const step = event.repeat ? 4 : 1;
-    
-    // Read min/max values from the input field
-    const minHeight = parseInt(maxTimeInput.min) || 1;
-    const maxHeight = parseInt(maxTimeInput.max) || 256;
     
     switch (event.key) {
         case 'ArrowUp':
             event.preventDefault();
-            currentHeight = Math.min(maxHeight, currentHeight + step);
-            maxTimeInput.value = currentHeight;
+            currentHeight = Math.min(MAX_MAX_TIME, currentHeight + step);
+            setMaxTime(currentHeight);
             updateSimulation();
             break;
         case 'ArrowDown':
             event.preventDefault();
-            currentHeight = Math.max(minHeight, currentHeight - step);
-            maxTimeInput.value = currentHeight;
+            currentHeight = Math.max(MIN_MAX_TIME, currentHeight - step);
+            setMaxTime(currentHeight);
             updateSimulation();
             break;
         case ' ':
             event.preventDefault();
-            // Toggle sort mode
-            sortMode = !sortMode;
-            const sortModeToggle = document.getElementById('sortModeToggle');
-            sortModeToggle.textContent = sortMode ? 'Sort Rows: ON' : 'Sort Rows: OFF';
-            sortModeToggle.classList.toggle('active', sortMode);
+            // Toggle "row sort"" mode
+            rowSortMode = !rowSortMode;
+            const rowSortModeToggle = document.getElementById('rowSortModeToggle');
+            rowSortModeToggle.textContent = rowSortMode ? 'Sort Rows: ON' : 'Sort Rows: OFF';
+            rowSortModeToggle.classList.toggle('active', rowSortMode);
             
-            if (sortMode) {
+            if (rowSortMode) {
                 // Enable sort mode - store original tree
                 if (tree && tree.length > 0) {
                     originalTree = JSON.parse(JSON.stringify(tree)); // Deep copy
@@ -1263,7 +1264,7 @@ function redrawAllRowsSorted() {
         const cellHeight = rowHeight - 1;
         
         // If sort mode is enabled, sort the cells by branch index before drawing
-        const cellsToDraw = sortMode ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
+        const cellsToDraw = rowSortMode ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
         
         let currentX = margin;
         for (let cell of cellsToDraw) {
@@ -1304,7 +1305,7 @@ async function applySortMode() {
     
     for (let rowIndex = 0; rowIndex < tree.length; rowIndex++) {
         // Check if simulation was cancelled or sort mode disabled
-        if (simulationCancelled || !sortMode) {
+        if (simulationCancelled || !rowSortMode) {
             return;
         }
         
@@ -1315,7 +1316,7 @@ async function applySortMode() {
         await new Promise(resolve => setTimeout(resolve, 100));
         
         // Check again after delay
-        if (simulationCancelled || !sortMode) {
+        if (simulationCancelled || !rowSortMode) {
             return;
         }
         
@@ -1394,7 +1395,7 @@ window.addEventListener('load', function() {
 document.addEventListener('DOMContentLoaded', function() {
     const weightsInput = document.getElementById('weights');
     const maxTimeInput = document.getElementById('maxTime');
-    const sortModeToggle = document.getElementById('sortModeToggle');
+    const rowSortModeToggle = document.getElementById('rowSortModeToggle');
     
     // Cancel operations immediately on any input
     weightsInput.addEventListener('input', function() {
@@ -1408,6 +1409,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     maxTimeInput.addEventListener('input', function() {
+        // Update the maxTime variable when input changes
+        setMaxTime(parseInt(maxTimeInput.value) || 1);
         // Cancel any currently running operation immediately
         if (currentTimeout) {
             clearTimeout(currentTimeout);
@@ -1418,12 +1421,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Add sort mode toggle functionality
-    sortModeToggle.addEventListener('click', function() {
-        sortMode = !sortMode;
-        sortModeToggle.textContent = sortMode ? 'Sort Rows: ON' : 'Sort Rows: OFF';
-        sortModeToggle.classList.toggle('active', sortMode);
+    rowSortModeToggle.addEventListener('click', function() {
+        rowSortMode = !rowSortMode;
+        rowSortModeToggle.textContent = rowSortMode ? 'Sort Rows: ON' : 'Sort Rows: OFF';
+        rowSortModeToggle.classList.toggle('active', rowSortMode);
         
-        if (sortMode) {
+        if (rowSortMode) {
             // Enable sort mode - store original tree
             if (tree && tree.length > 0) {
                 originalTree = JSON.parse(JSON.stringify(tree)); // Deep copy

@@ -98,6 +98,15 @@ body, html {
     font-size: 14px;
 }
 
+/* Wall dragging cursor styles */
+.wall-draggable {
+    cursor: ew-resize !important;
+}
+
+.wall-dragging {
+    cursor: ew-resize !important;
+}
+
 .input-container label {
     cursor: none;
     margin-right: 10px;
@@ -312,7 +321,8 @@ body, html {
       <li>"<u>Time</u>" is the height of the visualization: it's how many branches "you" have encountered.</li>
       <li>The "Frequency" counts how many times each color branch was encountered in your history.</li> 
       <li>Tip: press "up" and "down" to adjust the time.</li>
-              <li>Tip: move the mouse horizontally to adjust where "you" are, vertically to adjust the time.</li>
+      <li>Tip: move the mouse horizontally to adjust where "you" are, vertically to adjust the time.</li>
+      <li>Tip: drag the red walls in row 1 to adjust branch ratios in real-time.</li>
     </ul>
   </div>
   <div class="canvas-container">
@@ -340,6 +350,8 @@ let mouseX = null;
 let mouseY = null;
 let isDragging = false; // Track if we're currently dragging
 let lockedX = null; // Store the locked X position during drag
+let isDraggingWall = false; // Track if user is dragging a wall between cells
+let draggedWallIndex = -1; // Index of the wall being dragged
 let tree = null; // Store the tree structure for arc calculation
 let rowsCompleted = 0; // Track how many rows have been completed
 let rowSortMode = false; // Track whether "row sort" mode is enabled
@@ -757,6 +769,22 @@ function drawRow(rowIndex, rowCells, margin, availableWidth, availableHeight) {
         currentX += cellWidth;
     }
     
+    // Draw walls more prominently on row 1 (rowIndex === 0)
+    if (rowIndex === 0) {
+        let wallX = margin;
+        for (let i = 0; i < rowCells.length - 1; i++) {
+            wallX += rowCells[i].width * availableWidth;
+            
+            // Draw a thicker, more visible wall
+            bufferCtx.fillStyle = '#FF0000'; // Red color for walls
+            bufferCtx.fillRect(wallX - 2, y, 4, cellHeight);
+            
+            // Add a subtle highlight to make it obvious it's draggable
+            bufferCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            bufferCtx.fillRect(wallX - 1, y, 2, cellHeight);
+        }
+    }
+    
     // Draw 1px black line underneath the PREVIOUS row (above current row)
     // Only draw this line if we're not on the first row
     if (rowIndex > 0) {
@@ -991,7 +1019,11 @@ function handleMouseMove(event) {
     mouseY = currentMouseY;
     
     // Update X position based on drag state
-    if (isDragging && lockedX !== null) {
+    if (isDraggingWall && draggedWallIndex >= 0) {
+        // Handle wall dragging - update mouseX for wall calculations
+        mouseX = currentMouseX;
+        handleWallDrag(currentMouseX);
+    } else if (isDragging && lockedX !== null) {
         // Keep X position locked during drag
         mouseX = lockedX;
     } else {
@@ -1070,6 +1102,27 @@ function handleMouseDown(event) {
             drawMouseLineOnForeground();
         }
         
+        // Check if we're clicking on a wall in row 1
+        if (tree && tree.length > 0 && mouseY !== null) {
+            const margin = 0;
+            const availableHeight = canvas.height - 2 * margin;
+            const rowHeight = getRowHeight(0, availableHeight); // Row 1
+            
+            // Check if mouse is in row 1
+            if (mouseY >= margin && mouseY < margin + rowHeight) {
+                console.log('Mouse in row 1, checking for walls at X:', mouseX);
+                const wallIndex = findWallAtPosition(mouseX, margin, availableHeight);
+                console.log('Wall index found:', wallIndex);
+                if (wallIndex >= 0) {
+                    console.log('Starting wall drag for wall:', wallIndex);
+                    isDraggingWall = true;
+                    draggedWallIndex = wallIndex;
+                    event.preventDefault(); // Prevent default behavior
+                    return; // Don't start normal dragging
+                }
+            }
+        }
+        
         isDragging = true;
         lockedX = mouseX; // Lock the current X position
     }
@@ -1079,8 +1132,13 @@ function handleMouseDown(event) {
 function handleMouseUp(event) {
     // Handle both mouse and touch events
     if (event.button === 0 || event.type === 'touchend') { // Left mouse button or touch
-        isDragging = false;
-        lockedX = null; // Release the X position lock
+        if (isDraggingWall) {
+            isDraggingWall = false;
+            draggedWallIndex = -1;
+        } else {
+            isDragging = false;
+            lockedX = null; // Release the X position lock
+        }
     }
 }
 
@@ -1192,6 +1250,30 @@ function drawMouseLine(margin, availableWidth, availableHeight) {
         const iconX = clampedMouseX - iconSize / 2;
         const iconY = clampedMouseY - iconSize / 2;
         foregroundCtx.drawImage(cursorIcon, iconX, iconY, iconSize, iconSize);
+    }
+    
+    // Check if cursor is over a draggable wall in row 1
+    if (tree && tree.length > 0 && mouseY !== null) {
+        const margin = 0;
+        const availableHeight = canvas.height - 2 * margin;
+        const rowHeight = getRowHeight(0, availableHeight); // Row 1
+        
+        // Check if mouse is in row 1
+        if (mouseY >= margin && mouseY < margin + rowHeight) {
+            const wallIndex = findWallAtPosition(mouseX, margin, availableHeight);
+            if (wallIndex >= 0) {
+                // Draw a visual indicator that this wall is draggable
+                foregroundCtx.fillStyle = 'rgba(255, 255, 0, 0.7)'; // Yellow highlight
+                foregroundCtx.fillRect(clampedMouseX - 10, clampedMouseY - 10, 20, 20);
+                
+                // Change cursor style (this will be handled by CSS)
+                document.body.style.cursor = 'ew-resize';
+            } else {
+                document.body.style.cursor = 'none';
+            }
+        } else {
+            document.body.style.cursor = 'none';
+        }
     }
     
     // Restore context state
@@ -1310,6 +1392,22 @@ function redrawAllRowsSorted() {
             currentX += cellWidth;
         }
         
+        // Draw walls more prominently on row 1 (rowIndex === 0)
+        if (rowIndex === 0) {
+            let wallX = margin;
+            for (let i = 0; i < rowCells.length - 1; i++) {
+                wallX += rowCells[i].width * availableWidth;
+                
+                // Draw a thicker, more visible wall
+                bufferCtx.fillStyle = '#FF0000'; // Red color for walls
+                bufferCtx.fillRect(wallX - 2, y, 4, cellHeight);
+                
+                // Add a subtle highlight to make it obvious it's draggable
+                bufferCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                bufferCtx.fillRect(wallX - 1, y, 2, cellHeight);
+            }
+        }
+        
         // Draw horizontal line underneath the previous row
         if (rowIndex > 0) {
             const previousRowHeight = getRowHeight(rowIndex - 1, availableHeight);
@@ -1424,6 +1522,82 @@ function drawBackgroundRectangle(margin, availableWidth, availableHeight) {
     // Draw background rectangle covering all remaining space
     bufferCtx.fillStyle = getBackgroundColor();
     bufferCtx.fillRect(margin, startY, availableWidth, remainingHeight);
+}
+
+// Find which wall (if any) is at the given X position in row 1
+function findWallAtPosition(x, margin, availableHeight) {
+    if (!tree || tree.length === 0) return -1;
+    
+    const availableWidth = canvas.width - 2 * margin;
+    const rowCells = tree[0];
+    let currentX = margin;
+    
+    console.log('Finding wall at X:', x, 'availableWidth:', availableWidth, 'rowCells:', rowCells);
+    
+    // Check each wall between cells
+    for (let i = 0; i < rowCells.length - 1; i++) {
+        currentX += rowCells[i].width * availableWidth;
+        console.log('Wall', i, 'at X:', currentX, 'cell width:', rowCells[i].width);
+        
+        // Check if X is within the wall area (5px tolerance)
+        if (Math.abs(x - currentX) <= 5) {
+            console.log('Found wall at index:', i);
+            return i;
+        }
+    }
+    
+    console.log('No wall found');
+    return -1;
+}
+
+// Handle wall dragging to adjust branch ratios
+function handleWallDrag(newX) {
+    if (!tree || tree.length === 0 || draggedWallIndex < 0) return;
+    
+    const margin = 0;
+    const availableWidth = canvas.width - 2 * margin;
+    const rowCells = tree[0];
+    
+    // Calculate the current total width using Decimal
+    let totalWidth = Decimal(0);
+    for (let cell of rowCells) {
+        totalWidth = totalWidth.plus(Decimal(cell.width));
+    }
+    
+    // Calculate the new position for the dragged wall using Decimal
+    const newWallPosition = Decimal(newX - margin).dividedBy(availableWidth);
+    
+    // Quantize to 5% increments (0.05) and clamp to 5% - 95% bounds using Decimal
+    const quantizedPosition = newWallPosition.dividedBy(Decimal(0.05)).round().times(Decimal(0.05));
+    const clampedPosition = Decimal.max(Decimal(0.05), Decimal.min(Decimal(0.95), quantizedPosition));
+    
+    // Calculate new branch ratios using Decimal
+    const newRatios = [];
+    let accumulatedWidth = Decimal(0);
+    
+    for (let i = 0; i < rowCells.length; i++) {
+        if (i === draggedWallIndex) {
+            // This is the cell before the dragged wall
+            newRatios.push(clampedPosition.minus(accumulatedWidth).toNumber());
+        } else if (i === draggedWallIndex + 1) {
+            // This is the cell after the dragged wall
+            const remainingWidth = totalWidth.minus(clampedPosition);
+            newRatios.push(remainingWidth.toNumber());
+        } else {
+            // Keep other cells the same
+            newRatios.push(rowCells[i].width);
+        }
+        
+        if (i <= draggedWallIndex) {
+            accumulatedWidth = accumulatedWidth.plus(Decimal(newRatios[i]));
+        }
+    }
+    
+    // Update the branch ratios
+    setBranchRatios(newRatios);
+    
+    // Update the simulation
+    updateSimulation();
 }
 
 // Handle window resize

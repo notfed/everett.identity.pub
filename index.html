@@ -61,7 +61,7 @@ body, html {
     touch-action: none; /* Prevent default touch behaviors */
 }
 
-.ui-container {
+.stats-container {
     position: fixed;
     bottom: 27px;
     left: 0;
@@ -270,7 +270,7 @@ body, html {
 </style>
 </head>
 <body>
-    <div class="ui-container">
+    <div class="stats-container">
           <div id="color-legend" class="color-legend" style="margin-left: 20px;">
         <h3>Branch ratios</h3>
         <div id="legend-items"></div>
@@ -578,7 +578,7 @@ async function updateSimulation() {
     if (mouseX !== null && mouseY !== null && tree && tree.length > 0 && maxTime > 0) {
         const margin = 0;
         const availableWidth = canvas.width - 2 * margin;
-        calculateCursorBranches(margin, availableWidth);
+        updateBranchStatsBasedOnCursor(margin, availableWidth);
     }
     
 
@@ -1129,7 +1129,7 @@ function drawMouseLineOnForeground() {
         // Only calculate arc if tree exists and mouse is within table bounds (for tree-related calculations)
         if (tree && maxTime > 0 && mouseX >= margin && mouseX <= margin + availableWidth &&
             mouseY >= margin && mouseY <= margin + availableHeight) {
-            calculateCursorBranches(margin, availableWidth);
+            updateBranchStatsBasedOnCursor(margin, availableWidth);
         }
     }
 }
@@ -1188,15 +1188,13 @@ const computeLocalBranchBounds = (branchingWeights) => {
 }
 
 // Calculate and log the arc
-function calculateCursorBranches(margin, availableWidth) {
+function updateBranchStatsBasedOnCursor(margin, availableWidth) {
 
   // Update the cursor time display
   const cursorTimeElement = document.getElementById('cursor-time-display');
   if (cursorTimeElement) {
       cursorTimeElement.textContent = cursorTime;
   }
-  
-
 
   // Where the mouse's X-coordinate actually is, normalized between 0 and 1, on the table
   const globalCursorX = Decimal((mouseX - margin) / availableWidth).clamp(Decimal(0), Decimal(1));
@@ -1238,18 +1236,6 @@ function calculateCursorBranches(margin, availableWidth) {
       parentMinBound = minBound;
       parentMaxBound = maxBound;
   }
-
-  // Log the branches
-//   console.log("branches = " + branches);
-  
-  // Log the frequencies of each branch
-  const branchFrequency = Array.from({ length: branchRatios.length }, (_, i) => 0);
-  branches.forEach(branch => {
-    branchFrequency[branch]++;
-  });
-  const totalFrequency = branches.length;
-  const probability = branchFrequency.map(frequency => Decimal(frequency).dividedBy(totalFrequency));
-//   console.log("probability = " + probability.map(f => f.toDP(2).toString()));
 
   // Update the on-screen displays
   updateFrequency(branches);

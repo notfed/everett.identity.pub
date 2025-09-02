@@ -328,7 +328,7 @@ const MOUSE_SYMBOL_Y_OFFSET = 96; // X offset for mouse symbol positioning
 const HELP_POPUP_PROTECTION_DELAY = 500; // Delay before help popup can be dismissed (ms)
 console.log('HELP_POPUP_PROTECTION_DELAY constant defined as:', HELP_POPUP_PROTECTION_DELAY);
 let B = [1, 1];
-let H = 17;
+let maxTime = 17;
 let currentTimeout = null;
 let timeoutOccurred = false;
 let simulationCancelled = false; // Flag to track if simulation was cancelled
@@ -503,7 +503,7 @@ function getBranchingWeights() {
 // Initialize simulation
 function init() {
     // Initialize input values from global variables
-    document.getElementById('maxTime').value = H;
+    document.getElementById('maxTime').value = maxTime;
     document.getElementById('weights').value = B.join(',');
     
 
@@ -539,11 +539,11 @@ async function updateSimulation() {
     
     // Get values using helper functions
     B = getBranchingWeights();
-    H = getHeight();
+    maxTime = getHeight();
     
     // If branching weight is 0, show zero rows
     if (B.length === 1 && B[0] === 0) {
-        H = 0;
+        maxTime = 0;
     }
     
     // Set timeout for 2 seconds
@@ -555,7 +555,7 @@ async function updateSimulation() {
         const margin = 0;
         const availableWidth = canvas.width - 2 * margin;
         const availableHeight = canvas.height - 2 * margin;
-        const rowHeight = availableHeight / H;
+        const rowHeight = availableHeight / maxTime;
         
         // Draw gray rows for the remaining rows based on actual progress
         const drawnRows = Math.max(1, rowsCompleted); // Use actual progress instead of hardcoded 1
@@ -575,7 +575,7 @@ async function updateSimulation() {
     await currentSimulationPromise;
     
     // Update probability display after simulation completes (for height changes)
-    if (mouseX !== null && mouseY !== null && tree && tree.length > 0 && H > 0) {
+    if (mouseX !== null && mouseY !== null && tree && tree.length > 0 && maxTime > 0) {
         const margin = 0;
         const availableWidth = canvas.width - 2 * margin;
         calculateAndLogArc(margin, availableWidth);
@@ -596,7 +596,7 @@ async function drawSimulationAsync() {
     const margin = 0;
     const availableWidth = bufferCanvas.width - 2 * margin;
     const availableHeight = bufferCanvas.height - 2 * margin;
-    const rowHeight = availableHeight / H;
+    const rowHeight = availableHeight / maxTime;
     
     // Calculate total weight for normalization
     const totalWeight = B.reduce((sum, weight) => sum + weight, 0);
@@ -782,7 +782,7 @@ function drawTimeoutIndicator() {
 
 // Draw gray rows for remaining rows after timeout
 function drawGrayRows(startRow, margin, availableWidth, availableHeight, rowHeight) {
-    if (startRow >= H) return;
+    if (startRow >= maxTime) return;
     
     const startY = margin + startRow * rowHeight;
     const remainingHeight = availableHeight - (startRow * rowHeight);
@@ -815,7 +815,7 @@ function generateTree() {
     tree.push(firstRow);
     
     // Generate subsequent rows
-    for (let row = 1; row < H; row++) {
+    for (let row = 1; row < maxTime; row++) {
         const newRow = [];
         const prevRow = tree[row - 1];
         
@@ -987,7 +987,7 @@ function handleMouseMove(event) {
     // Calculate cursor time based on Y position (only for tree-related calculations)
     const margin = 0;
     const availableHeight = canvas.height - 2 * margin;
-    const rowHeight = availableHeight / H;
+    const rowHeight = availableHeight / maxTime;
     
     // Only update cursorTime if cursor is within the table bounds (for tree calculations)
     if (mouseY >= margin && mouseY <= margin + availableHeight) {
@@ -1116,18 +1116,18 @@ function drawMouseLineOnForeground() {
     // Clear previous line
     clearForegroundCanvas();
     
-    // Always draw the mouse line if mouse coordinates are available
-    if (mouseX !== null && mouseY !== null) {
-        const margin = 0;
-        const availableWidth = canvas.width - 2 * margin;
-        const availableHeight = canvas.height - 2 * margin;
-        const rowHeight = availableHeight / H;
+            // Always draw the mouse line if mouse coordinates are available
+        if (mouseX !== null && mouseY !== null) {
+            const margin = 0;
+            const availableWidth = canvas.width - 2 * margin;
+            const availableHeight = canvas.height - 2 * margin;
+            const rowHeight = availableHeight / maxTime;
         
         // Always draw the mouse line regardless of position
         drawMouseLine(margin, availableWidth, availableHeight, rowHeight);
         
         // Only calculate arc if tree exists and mouse is within table bounds (for tree-related calculations)
-        if (tree && H > 0 && mouseX >= margin && mouseX <= margin + availableWidth &&
+        if (tree && maxTime > 0 && mouseX >= margin && mouseX <= margin + availableWidth &&
             mouseY >= margin && mouseY <= margin + availableHeight) {
             calculateAndLogArc(margin, availableWidth);
         }
@@ -1269,7 +1269,7 @@ function redrawAllRowsSorted() {
     const margin = 0;
     const availableWidth = bufferCanvas.width - 2 * margin;
     const availableHeight = bufferCanvas.height - 2 * margin;
-    const rowHeight = availableHeight / H;
+    const rowHeight = availableHeight / maxTime;
     
     // Redraw all rows with current sort mode
     for (let rowIndex = 0; rowIndex < Math.min(tree.length, 18); rowIndex++) {
@@ -1354,7 +1354,7 @@ function redrawRowWithSorting(rowIndex, rowCells) {
     const margin = 0;
     const availableWidth = canvas.width - 2 * margin;
     const availableHeight = canvas.height - 2 * margin;
-    const rowHeight = availableHeight / H;
+    const rowHeight = availableHeight / maxTime;
     
     const y = margin + rowIndex * rowHeight;
     const cellHeight = rowHeight - 1;

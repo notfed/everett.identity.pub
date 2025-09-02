@@ -282,7 +282,7 @@ body, html {
         </div>
       </div>
       <div class="input-container">
-        <label>Branch ratios (comma separated):</label><input type="text" id="weights" value="1,2" style="width: 100px;">
+                  <label>Branch ratios (comma separated):</label><input type="text" id="branchRatios" value="1,2" style="width: 100px;">
         <label>Max Time:</label><input type="number" id="maxTime" min="1" max="256" style="width: 60px;">
         <div class="sort-button-container">
           <div class="sort-tooltip">This is just to visually show that branch ratios are conserved over time.</div>
@@ -403,8 +403,7 @@ function shuffleColors() {
 
 // Background color for canvas and gray rows
 function getBackgroundColor() {
-    const weights = getBranchingWeights();
-    const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+    const totalWeight = branchRatios.reduce((sum, weight) => sum + weight, 0);
     
     // If no weights or all weights are 0, return a default color
     if (totalWeight === 0) {
@@ -413,13 +412,13 @@ function getBackgroundColor() {
     
     // Convert oklch colors to RGB using a simpler approach
     const colorComponents = [];
-    for (let i = 0; i < weights.length; i++) {
+    for (let i = 0; i < branchRatios.length; i++) {
         const color = getBranchColor(i);
         const rgb = convertOklchToRGB(color);
         if (rgb) {
             colorComponents.push({
                 rgb: rgb,
-                weight: weights[i] / totalWeight
+                weight: branchRatios[i] / totalWeight
             });
         }
     }
@@ -493,23 +492,18 @@ function setMaxTime(value) {
     document.getElementById('maxTime').value = value;
 }
 
-// Get branching weights with default values
-function getBranchingWeights() {
-    const weightsInput = document.getElementById('weights').value;
-    const weights = weightsInput.split(',').map(w => parseFloat(w.trim())).filter(w => !isNaN(w));
-    
-    if (weights.length === 0) {
-        return [1, 2];
-    }
-    
-    return weights;
+// Set branchRatios and update the input field
+function setBranchRatios(values) {
+    branchRatios = values;
 }
+
+
 
 // Initialize simulation
 function init() {
     // Initialize input values from global variables
     document.getElementById('maxTime').value = maxTime;
-    document.getElementById('weights').value = branchRatios.join(',');
+    setBranchRatios(branchRatios);
     
 
     
@@ -543,7 +537,7 @@ async function updateSimulation() {
 
     
     // Get values using helper functions
-    branchRatios = getBranchingWeights();
+    // branchRatios is now bound to the input field, no need to get it from getBranchingWeights()
     // maxTime is now bound to the input field, no need to get it from getHeight()
     
     // If branching weight is 0, show zero rows
@@ -1393,12 +1387,18 @@ window.addEventListener('load', function() {
 
 // Add event listeners for automatic updates
 document.addEventListener('DOMContentLoaded', function() {
-    const weightsInput = document.getElementById('weights');
+    const branchRatiosInput = document.getElementById('branchRatios');
     const maxTimeInput = document.getElementById('maxTime');
     const rowSortModeToggle = document.getElementById('rowSortModeToggle');
     
     // Cancel operations immediately on any input
-    weightsInput.addEventListener('input', function() {
+    branchRatiosInput.addEventListener('input', function() {
+        // Update the branchRatios variable when input changes
+        const inputValue = branchRatiosInput.value;
+        const newRatios = inputValue.split(',').map(w => parseFloat(w.trim())).filter(w => !isNaN(w));
+        if (newRatios.length > 0) {
+            setBranchRatios(newRatios);
+        }
         // Cancel any currently running operation immediately
         if (currentTimeout) {
             clearTimeout(currentTimeout);
@@ -1495,7 +1495,7 @@ function runUnitTests() {
 // Test function for background color mixing
 function testBackgroundColor() {
     console.log('Testing background color mixing...');
-    console.log('Current weights:', getBranchingWeights());
+    console.log('Current weights:', branchRatios);
     console.log('Current colors:', colors);
     console.log('Background color result:', getBackgroundColor());
 }

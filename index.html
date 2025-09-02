@@ -1034,6 +1034,9 @@ function handleMouseDown(event) {
             // Update coordinates to touch location
             mouseX = touchX;
             mouseY = touchY;
+            
+            // Immediately draw the line and icon at the new position
+            drawMouseLineOnForeground();
         }
         
         isDragging = true;

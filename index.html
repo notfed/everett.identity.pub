@@ -245,11 +245,11 @@ body, html {
           <div id="color-legend" class="color-legend" style="margin-left: 20px;">
         <h3>Branch ratios</h3>
         <div id="legend-items"></div>
-        <h3>Frequency</h3>
+        <h3>Your Frequency</h3>
         <div id="frequency-items"></div>
-        <h3>Cursor Time</h3>
-        <div style="color: white; font-family: Arial, sans-serif; font-size: 14px; text-align: center;">
-          Time: <span id="cursor-time-display">17</span>
+        <h3>Your Time</h3>
+        <div style="color: white; font-family: Arial, sans-serif; font-size: 14px;">
+          <span id="cursor-time-display">17</span>
         </div>
       </div>
           <div class="controls">
@@ -263,11 +263,7 @@ body, html {
     <div style="width: 150px;"></div>
   </div>
   
-  <div id="cursor-time-container" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: center; align-items: center; padding: 10px; background: rgba(0, 0, 0, 0.8); border-top: 1px solid #333;">
-    <div style="color: white; font-family: Arial, sans-serif; font-size: 14px;">
-      Time: <span id="bottom-cursor-time">17</span>
-    </div>
-  </div>
+
   
   <div class="help-popup" id="help-popup">
     <h1>Welcome to the Everett multiverse.</h1>
@@ -282,7 +278,7 @@ body, html {
     <ul style="text-align:left;">
       <li>Each cell is a world.</li>
       <li>Each world branches (i.e., divides) into the worlds immediately below it, proportional to the supplied "<u>Branch ratios</u>".</li>
-      <li>You are `𖨆`. (At the bottom.)</li>
+      <li>You are `𖨆`. (Your cursor.)</li>
       <li>The vertical line is your history: i.e., the sequence of branches (and their corresponding colors) you have encountered.</li>
       <li>"<u>Time</u>" is the height of the visualization: it's how many branches "you" have encountered.</li>
       <li>The "Frequency" counts how many times each color branch was encountered in your history.</li> 
@@ -1115,11 +1111,7 @@ function calculateAndLogArc(margin, availableWidth) {
       cursorTimeElement.textContent = cursorTime;
   }
   
-  // Update the bottom cursor time display
-  const bottomCursorTimeElement = document.getElementById('bottom-cursor-time');
-  if (bottomCursorTimeElement) {
-      bottomCursorTimeElement.textContent = cursorTime;
-  }
+
 
   // Where the mouse's X-coordinate actually is, normalized between 0 and 1, on the table
   const globalCursorX = Decimal((mouseX - margin) / availableWidth).clamp(Decimal(0), Decimal(1));

@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>The Everett Multiverse</title>
+  <script src="https://cdn.jsdelivr.net/npm/decimal.js@10.4.3/decimal.min.js"></script>
+  <script>
+    // Configure Decimal.js for high precision
+    Decimal.set({
+      precision: 1000,  // Set precision to 1000 digits
+      rounding: Decimal.ROUND_HALF_UP,
+      toExpNeg: -1000,
+      toExpPos: 1000
+    });
+  </script>
+  <style>
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body, html {
+  height: 100%;
+  background-color: black;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.canvas-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
+#canvas {
+    background-color: white;    
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#foreground-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+}
+
+.ui-container {
+    position: fixed;
+    bottom: 27px;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.controls {
+    color: white;
+    font-family: Arial, sans-serif;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 10px 15px;
+    border-radius: 5px;
+    border: 1px solid #333;
+}
+
+.controls input, .controls button {
+    margin: 5px;
+    padding: 5px;
+    font-size: 14px;
+}
+
+.controls label {
+    margin-right: 10px;
+}
+
+.sort-toggle {
+    background: #333;
+    color: white;
+    border: 1px solid #666;
+    border-radius: 3px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.sort-toggle:hover {
+    background: #555;
+}
+
+.sort-toggle.active {
+    background: #44AA88;
+    border-color: #66CCAA;
+}
+
+.sort-button-container {
+    position: relative;
+    display: inline-block;
+}
+
+.sort-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1001;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    margin-bottom: 8px;
+}
+
+.sort-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+.sort-button-container:hover .sort-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+
+
+
+.color-legend {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 10px 15px;
+    width: 150px;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+}
+
+.color-legend h3 {
+    margin: 0 0 6px 0;
+    color: white;
+    font-size: 13px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border: 1px solid #333;
+    margin-right: 6px;
+    border-radius: 2px;
+}
+
+.legend-label {
+    color: white;
+}
+
+.frequency-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.frequency-label {
+    color: white;
+}
+
+.probability-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.probability-label {
+    color: white;
+}
+
+.help-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
+    font-size: clamp(12px, 2.5vw, 16px);
+    line-height: 1.5;
+    text-align: center;
+    z-index: 1000;
+    pointer-events: none;
+    width: clamp(400px, 60vw, 800px);
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+    box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+    .help-popup {
+        padding: 15px 20px;
+        width: 95vw;
+        max-width: 95vw;
+        max-height: 95vh;
+    }
+}
+
+@media (max-width: 320px) {
+    .help-popup {
+        padding: 10px 15px;
+        width: 98vw;
+        max-width: 98vw;
+        max-height: 98vh;
+    }
+}
+</style>
+</head>
+<body>
+    <div class="ui-container">
+    <div id="color-legend" class="color-legend" style="margin-left: 20px;">
+      <h3>Branch ratios</h3>
+      <div id="legend-items"></div>
+      <h3>Frequency</h3>
+      <div id="frequency-items"></div>
+    </div>
+          <div class="controls">
+        <label>Branch ratios (comma separated):</label><input type="text" id="weights" value="1,2" style="width: 100px;">
+        <label>Time:</label><input type="number" id="height" min="1" max="256" style="width: 60px;">
+        <div class="sort-button-container">
+          <div class="sort-tooltip">This is just to visually show that branch ratios are conserved over time.</div>
+          <button id="sortModeToggle" class="sort-toggle" style="display: none;">Sort Rows: OFF</button>
+        </div>
+      </div>
+    <div style="width: 150px;"></div>
+  </div>
+  
+  <div class="help-popup" id="help-popup">
+    <h1>Welcome to the Everett multiverse.</h1>
+    <h2>Motivation</h2>
+    <ul style="text-align:left;">
+      <li>While in the Everett interpretation of quantum mechanics the universe evolves deterministically (according to the <a href="https://en.wikipedia.org/wiki/Schr%C3%B6dinger_equation"></a>Schrödinger equation</a>), observers see probability anyway.</li>
+      <li>This is a visual aid to help understand how this occurs.</li>
+      <li>You see, despite the multiverse as a whole being deterministic, if an observer performs a sequence of quantum coin flips, then, after each coin flip, the world branches (think "green=heads, tails=blue") into different observers who see different results, and, after a large number of coin flips, almost all observers will appear to have witnessed a sequence of random results unfold before their eyes. Again, this happens despite the multiverse being deterministic.</li>
+    </ul>
+
+    <h2>What am I looking at?</h2>
+    <ul style="text-align:left;">
+      <li>Each cell is a world.</li>
+      <li>Each world branches (i.e., divides) into the worlds immediately below it, proportional to the supplied "<u>Branch ratios</u>".</li>
+      <li>You are `𖨆`. (At the bottom.)</li>
+      <li>The vertical line is your history: i.e., the sequence of branches (and their corresponding colors) you have encountered.</li>
+      <li>"<u>Time</u>" is the height of the visualization: it's how many branches "you" have encountered.</li>
+      <li>The "Frequency" counts how many times each color branch was encountered in your history.</li> 
+      <li>Tip: press "up" and "down" to adjust the time.</li>
+      <li>Tip: move the mouse to adjust where "you" are.</li>
+    </ul>
+  </div>
+  <div class="canvas-container">
+    <canvas id="canvas"></canvas>
+    <canvas id="foreground-canvas"></canvas>
+  </div>
+
+<script>
+// Global Constants
+const YOU_SYMBOL = '𖨆';
+const TIMEOUT_MS = 500; // Timeout after 2 seconds (increased from 500ms)
+let B = [1, 1];
+let H = 17;
+let currentTimeout = null;
+let timeoutOccurred = false;
+let simulationCancelled = false; // Flag to track if simulation was cancelled
+let currentSimulationPromise = null; // Track the current simulation
+let mouseX = null;
+let mouseY = null;
+let tree = null; // Store the tree structure for arc calculation
+let rowsCompleted = 0; // Track how many rows have been completed
+let sortMode = false; // Track whether sort mode is enabled
+let originalTree = null; // Store the original unsorted tree structure
+let helpPopupProtected = true; // Flag to protect help popup for first 500ms
+
+// Canvas setup
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const foregroundCanvas = document.getElementById('foreground-canvas');
+const foregroundCtx = foregroundCanvas.getContext('2d');
+
+// Double-buffering setup
+const bufferCanvas = document.createElement('canvas');
+const bufferCtx = bufferCanvas.getContext('2d');
+
+// Configure canvas contexts for pixel-perfect rendering
+ctx.imageSmoothingEnabled = false;
+foregroundCtx.imageSmoothingEnabled = false;
+bufferCtx.imageSmoothingEnabled = false;
+
+// Set canvas size to full screen
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    foregroundCanvas.width = window.innerWidth;
+    foregroundCanvas.height = window.innerHeight;
+    bufferCanvas.width = window.innerWidth;
+    bufferCanvas.height = window.innerHeight;
+}
+
+// Initial resize
+resizeCanvas();
+
+// Colors for different branches
+const colors = [
+'oklch(79.33% 0.179 145.62)', // var(--uchu-green-#)
+    'oklch(62.39% 0.181 258.33)', // var(--uchu-blue-4)
+    'oklch(58.47% 0.181 302.06)', // var(--uchu-purple-4)
+    'oklch(85.43% 0.09 354.1)', // var(--uchu-pink-4)
+    'oklch(78.75% 0.14163582809066333 54.32911089172009)', // var(--uchu-orange-4)
+    'oklch(62.73% 0.209 12.37)', // var(--uchu-red-4)
+    'oklch(90.92% 0.125 92.56)', // var(--uchu-yellow-4)
+
+];
+
+// Shuffle the colors array randomly
+function shuffleColors() {
+    for (let i = colors.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [colors[i], colors[j]] = [colors[j], colors[i]];
+    }
+}
+
+// Shuffle colors on initialization
+// shuffleColors();
+
+// Background color for canvas and gray rows
+function getBackgroundColor() {
+    const weights = getBranchingWeights();
+    const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+    
+    // If no weights or all weights are 0, return a default color
+    if (totalWeight === 0) {
+        return '#44AA88';
+    }
+    
+    // Convert oklch colors to RGB using a simpler approach
+    const colorComponents = [];
+    for (let i = 0; i < weights.length; i++) {
+        const color = getBranchColor(i);
+        const rgb = convertOklchToRGB(color);
+        if (rgb) {
+            colorComponents.push({
+                rgb: rgb,
+                weight: weights[i] / totalWeight
+            });
+        }
+    }
+    
+    // If no valid colors, return default
+    if (colorComponents.length === 0) {
+        return '#44AA88';
+    }
+    
+    // Mix the colors based on weights
+    const mixedColor = mixColorsByWeight(colorComponents);
+    return mixedColor;
+}
+
+// Convert oklch colors to RGB using a canvas-based approach
+function convertOklchToRGB(color) {
+    // Create a temporary canvas to get the actual RGB values
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+    
+    // Set the color and read the pixel data
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, 1, 1);
+    
+    try {
+        const imageData = ctx.getImageData(0, 0, 1, 1);
+        const data = imageData.data;
+        
+        return {
+            r: data[0],
+            g: data[1], 
+            b: data[2]
+        };
+    } catch (error) {
+        return null;
+    }
+}
+
+// Helper function to mix colors by weight
+function mixColorsByWeight(colorComponents) {
+    let totalR = 0, totalG = 0, totalB = 0;
+    
+    for (const component of colorComponents) {
+        totalR += component.rgb.r * component.weight;
+        totalG += component.rgb.g * component.weight;
+        totalB += component.rgb.b * component.weight;
+    }
+    
+    const r = Math.round(totalR);
+    const g = Math.round(totalG);
+    const b = Math.round(totalB);
+    
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
+// Get color with safe indexing
+function getBranchColor(index) {
+    return colors[index % colors.length];
+}
+
+// Get height with default value
+function getHeight() {
+    const heightInput = document.getElementById('height').value;
+    const height = parseInt(heightInput);
+    return isNaN(height) || height <= 0 ? 1 : height;
+}
+
+// Get branching weights with default values
+function getBranchingWeights() {
+    const weightsInput = document.getElementById('weights').value;
+    const weights = weightsInput.split(',').map(w => parseFloat(w.trim())).filter(w => !isNaN(w));
+    
+    if (weights.length === 0) {
+        return [1, 2];
+    }
+    
+    return weights;
+}
+
+// Initialize simulation
+function init() {
+    // Initialize input values from global variables
+    document.getElementById('height').value = H;
+    document.getElementById('weights').value = B.join(',');
+    
+
+    
+    updateSimulation();
+}
+
+// Update simulation based on current input values
+async function updateSimulation() {
+    // Cancel any currently running operation
+    if (currentTimeout) {
+        clearTimeout(currentTimeout);
+        currentTimeout = null;
+    }
+    
+    // Cancel any ongoing simulation
+    simulationCancelled = true;
+    
+    // Wait for current simulation to finish if it exists
+    if (currentSimulationPromise) {
+        try {
+            await currentSimulationPromise;
+        } catch (e) {
+            // Ignore errors from cancelled simulations
+        }
+    }
+    
+    // Reset timeout flag and progress tracking
+    timeoutOccurred = false;
+    rowsCompleted = 0;
+    
+
+    
+    // Get values using helper functions
+    B = getBranchingWeights();
+    H = getHeight();
+    
+    // If branching weight is 0, show zero rows
+    if (B.length === 1 && B[0] === 0) {
+        H = 0;
+    }
+    
+    // Set timeout for 2 seconds
+    currentTimeout = setTimeout(() => {
+        currentTimeout = null;
+        timeoutOccurred = true;
+        
+        // Calculate how many rows have been drawn so far
+        const margin = 0;
+        const availableWidth = canvas.width - 2 * margin;
+        const availableHeight = canvas.height - 2 * margin;
+        const rowHeight = availableHeight / H;
+        
+        // Draw gray rows for the remaining rows based on actual progress
+        const drawnRows = Math.max(1, rowsCompleted); // Use actual progress instead of hardcoded 1
+        drawGrayRows(drawnRows, margin, availableWidth, availableHeight, rowHeight);
+        
+        // Show crash icon on canvas at bottom center
+        drawTimeoutIndicator();
+        
+        // Force a redraw to ensure gray rows are visible
+        setTimeout(async () => {
+            drawGrayRows(drawnRows, margin, availableWidth, availableHeight, rowHeight);
+        }, 10);
+    }, TIMEOUT_MS);
+    
+    // Start asynchronous computation
+    currentSimulationPromise = drawSimulationAsync();
+    await currentSimulationPromise;
+    
+    // Update probability display after simulation completes (for height changes)
+    if (mouseX !== null && mouseY !== null && tree && tree.length > 0 && H > 0) {
+        const margin = 0;
+        const availableWidth = canvas.width - 2 * margin;
+        calculateAndLogArc(margin, availableWidth);
+    }
+    
+
+}
+
+// Draw the complete simulation asynchronously
+async function drawSimulationAsync() {
+    // Reset cancelled flag for new simulation
+    simulationCancelled = false;
+    
+    // Clear buffer canvas
+    bufferCtx.fillStyle = getBackgroundColor();
+    bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+    
+    const margin = 0;
+    const availableWidth = bufferCanvas.width - 2 * margin;
+    const availableHeight = bufferCanvas.height - 2 * margin;
+    const rowHeight = availableHeight / H;
+    
+    // Calculate total weight for normalization
+    const totalWeight = B.reduce((sum, weight) => sum + weight, 0);
+    
+    // Draw title first
+    bufferCtx.fillStyle = '#333';
+    bufferCtx.font = 'bold 16px Arial';
+    bufferCtx.textAlign = 'center';
+    
+    // Update legend
+    updateLegend();
+    
+    // Start asynchronous tree generation and drawing
+    await generateTreeAsync(totalWeight, margin, availableWidth, availableHeight, rowHeight);
+}
+
+// Generate tree and draw asynchronously
+async function generateTreeAsync(totalWeight, margin, availableWidth, availableHeight, rowHeight) {
+    tree = []; // Store in global variable
+    let currentRow = 0;
+    
+    // Skip the first row - start with what would have been the second row
+    // Generate the first actual row (which was previously the second row)
+    const firstRow = [];
+    for (let j = 0; j < B.length; j++) {
+        const weight = B[j] / totalWeight;
+        firstRow.push({
+            width: weight,
+            branchIndex: j
+        });
+    }
+    tree.push(firstRow);
+    
+    // Draw first row immediately
+    drawRow(0, tree[0], margin, availableWidth, availableHeight, rowHeight);
+    
+    // Continue with subsequent rows asynchronously
+    await generateNextRowAsync(tree, currentRow, totalWeight, margin, availableWidth, availableHeight, rowHeight);
+}
+
+// Generate next row asynchronously
+async function generateNextRowAsync(localTree, currentRow, totalWeight, margin, availableWidth, availableHeight, rowHeight) {
+    // Check if we should continue - only draw first 18 rows
+    if (currentRow >= 18) {
+        // Always draw gray rows after row 18, regardless of target height
+        drawGrayRows(18, margin, availableWidth, availableHeight, rowHeight);
+        
+        // Redraw timeout indicator if timeout occurred
+        if (timeoutOccurred) {
+            drawTimeoutIndicator();
+        }
+        
+        if (currentTimeout) {
+            clearTimeout(currentTimeout);
+            currentTimeout = null;
+        }
+        
+
+        
+        return;
+    }
+    
+    // Check if computation was cancelled
+    if (!currentTimeout || simulationCancelled) {
+        return;
+    }
+    
+    const newRow = [];
+    const prevRow = localTree[currentRow];
+    
+    // Process cells in chunks to avoid blocking
+    await processCellsAsync(newRow, prevRow, totalWeight, currentRow, margin, availableWidth, availableHeight, rowHeight, localTree);
+}
+
+// Process cells asynchronously
+async function processCellsAsync(newRow, prevRow, totalWeight, currentRow, margin, availableWidth, availableHeight, rowHeight, localTree) {
+    const chunkSize = 100; // Process 100 cells at a time
+    
+    for (let cellIndex = 0; cellIndex < prevRow.length; cellIndex += chunkSize) {
+        // Check if simulation was cancelled
+        if (simulationCancelled) {
+            return;
+        }
+        
+        const endIndex = Math.min(cellIndex + chunkSize, prevRow.length);
+        
+        for (let i = cellIndex; i < endIndex; i++) {
+            const cell = prevRow[i];
+            // Split each cell according to branching weights
+            for (let j = 0; j < B.length; j++) {
+                const weight = B[j] / totalWeight;
+                newRow.push({
+                    width: cell.width * weight,
+                    branchIndex: j
+                });
+            }
+        }
+        
+        // Yield control to browser every chunk
+        await new Promise(resolve => setTimeout(resolve, 0));
+    }
+    
+    // Check again before finishing the row
+    if (simulationCancelled) {
+        return;
+    }
+    
+    // Finished this row, add to tree and draw
+    localTree.push(newRow);
+    drawRow(currentRow + 1, newRow, margin, availableWidth, availableHeight, rowHeight);
+    
+    // Continue with next row
+    await generateNextRowAsync(localTree, currentRow + 1, totalWeight, margin, availableWidth, availableHeight, rowHeight);
+}
+
+// Draw a single row
+function drawRow(rowIndex, rowCells, margin, availableWidth, availableHeight, rowHeight) {
+    // Don't draw if timeout occurred or simulation was cancelled
+    if (timeoutOccurred || simulationCancelled) {
+        return;
+    }
+    
+    // Only draw the first 18 rows (0-17)
+    if (rowIndex >= 18) {
+        return;
+    }
+    
+    const y = margin + rowIndex * rowHeight;
+    const cellHeight = rowHeight - 1; // 1px gap between rows
+    
+    // Draw cells based on tree structure
+    let currentX = margin;
+    
+    // If sort mode is enabled, sort the cells by branch index before drawing
+    const cellsToDraw = sortMode ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
+    
+    for (let cell of cellsToDraw) {
+        const cellWidth = cell.width * availableWidth;
+        
+        // Determine color based on cell's branch path
+        const colorIndex = cell.branchIndex % colors.length;
+        bufferCtx.fillStyle = getBranchColor(colorIndex);
+        
+        bufferCtx.fillRect(currentX, y, cellWidth, cellHeight);
+        
+        // Add left border for all cells
+        bufferCtx.fillStyle = '#000000';
+        bufferCtx.fillRect(currentX, y, 1, cellHeight);
+        
+        currentX += cellWidth;
+    }
+    
+    // Draw 1px black line underneath the PREVIOUS row (above current row)
+    // Only draw this line if we're not on the first row
+    if (rowIndex > 0) {
+        const previousRowY = margin + (rowIndex - 1) * rowHeight;
+        const previousRowCellHeight = rowHeight - 1;
+        
+        bufferCtx.fillStyle = '#000000';
+        bufferCtx.fillRect(margin, previousRowY + previousRowCellHeight, availableWidth, 1);
+    }
+    
+    // Copy buffer to main canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bufferCanvas, 0, 0);
+    
+    // Update progress tracking
+    rowsCompleted = Math.max(rowsCompleted, rowIndex + 1);
+    
+    // Redraw timeout indicator if timeout occurred
+    if (timeoutOccurred) {
+        drawTimeoutIndicator();
+    }
+}
+
+// Draw timeout indicator
+function drawTimeoutIndicator() {
+    ctx.fillStyle = '#FF6B6B';
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('...', canvas.width / 2, canvas.height - 50);
+}
+
+// Draw gray rows for remaining rows after timeout
+function drawGrayRows(startRow, margin, availableWidth, availableHeight, rowHeight) {
+    if (startRow >= H) return;
+    
+    const startY = margin + startRow * rowHeight;
+    const remainingHeight = availableHeight - (startRow * rowHeight);
+    
+    // Draw a single gray rectangle covering all remaining space
+    // Start 1 pixel higher to cover the gap from the last row
+    bufferCtx.fillStyle = getBackgroundColor();
+    bufferCtx.fillRect(margin, startY - 1, availableWidth, remainingHeight + 1);
+    
+    // Copy buffer to main canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bufferCanvas, 0, 0);
+}
+
+// Generate the complete tree structure with proper weighted splitting
+function generateTree() {
+    const tree = [];
+    const totalWeight = B.reduce((sum, weight) => sum + weight, 0);
+    
+    // Skip the first row - start with what would have been the second row
+    // First row: split according to branching weights
+    const firstRow = [];
+    for (let j = 0; j < B.length; j++) {
+        const weight = B[j] / totalWeight;
+        firstRow.push({
+            width: weight,
+            branchIndex: j
+        });
+    }
+    tree.push(firstRow);
+    
+    // Generate subsequent rows
+    for (let row = 1; row < H; row++) {
+        const newRow = [];
+        const prevRow = tree[row - 1];
+        
+        for (let cell of prevRow) {
+            // Split each cell according to branching weights
+            for (let i = 0; i < B.length; i++) {
+                const weight = B[i] / totalWeight;
+                newRow.push({
+                    width: cell.width * weight,
+                    branchIndex: i
+                });
+            }
+        }
+        
+        tree.push(newRow);
+    }
+    
+    return tree;
+}
+
+// Update color legend
+function updateLegend() {
+    const legendItems = document.getElementById('legend-items');
+    legendItems.innerHTML = '';
+    
+    for (let i = 0; i < Math.min(B.length, colors.length); i++) {
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+        
+        const colorBox = document.createElement('div');
+        colorBox.className = 'legend-color';
+        colorBox.style.backgroundColor = getBranchColor(i);
+        
+        const label = document.createElement('span');
+        label.className = 'legend-label';
+        label.textContent = `${B[i]}`;
+        
+        legendItem.appendChild(colorBox);
+        legendItem.appendChild(label);
+        legendItems.appendChild(legendItem);
+    }
+}
+
+
+
+// Update frequency display with raw branch counts and percentages
+function updateFrequency(branches) {
+    const frequencyItems = document.getElementById('frequency-items');
+    frequencyItems.innerHTML = '';
+    
+    if (!branches || branches.length === 0) {
+        return;
+    }
+    
+    // Count occurrences of each branch index
+    const counts = {};
+    branches.forEach(index => {
+        counts[index] = (counts[index] || 0) + 1;
+    });
+    
+    // Calculate percentages
+    const total = branches.length;
+    const percentages = {};
+    Object.keys(counts).forEach(index => {
+        percentages[index] = Math.round((counts[index] / total) * 100);
+    });
+    
+    // Display frequencies with percentages
+    for (let i = 0; i < B.length; i++) {
+        const frequencyItem = document.createElement('div');
+        frequencyItem.className = 'frequency-item';
+        
+        const colorBox = document.createElement('div');
+        colorBox.className = 'legend-color';
+        colorBox.style.backgroundColor = getBranchColor(i);
+        
+        const label = document.createElement('span');
+        label.className = 'frequency-label';
+        const count = counts[i] || 0;
+        const percentage = percentages[i] || 0;
+        label.textContent = `${count} (${percentage}%)`;
+        
+        frequencyItem.appendChild(colorBox);
+        frequencyItem.appendChild(label);
+        frequencyItems.appendChild(frequencyItem);
+    }
+}
+
+// Show help popup
+function showHelpPopup() {
+    const helpPopup = document.getElementById('help-popup');
+    if (helpPopup) {
+        helpPopup.style.display = 'block';
+    }
+    
+    // Set mouse coordinates to center of screen and draw the line
+    mouseX = canvas.width / 2 - 96;
+    mouseY = canvas.height / 2;
+    drawMouseLineOnForeground();
+    
+    // Protect popup for first 500ms
+    helpPopupProtected = true;
+    setTimeout(() => {
+        helpPopupProtected = false;
+    }, 500);
+}
+
+// Hide help popup
+function hideHelpPopup() {
+    const helpPopup = document.getElementById('help-popup');
+    if (helpPopup) {
+        helpPopup.style.display = 'none';
+    }
+}
+
+// Handle mouse movement over canvas
+function handleMouseMove(event) {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = event.clientX - rect.left;
+    mouseY = event.clientY - rect.top;
+    
+    // Hide help popup when mouse moves (only if not protected)
+    if (!helpPopupProtected) {
+        hideHelpPopup();
+    }
+
+    // Draw the mouse line on foreground canvas
+    drawMouseLineOnForeground();
+}
+
+// Handle mouse leaving canvas
+function handleMouseLeave() {
+    mouseX = null;
+    mouseY = null;
+    clearForegroundCanvas();
+}
+
+// Handle keyboard events
+function handleKeyDown(event) {
+    const heightInput = document.getElementById('height');
+    let currentHeight = parseInt(heightInput.value) || 1;
+    // If key is held down, browser fires repeated keydown events with event.repeat = true
+    const step = event.repeat ? 4 : 1;
+    
+    // Read min/max values from the input field
+    const minHeight = parseInt(heightInput.min) || 1;
+    const maxHeight = parseInt(heightInput.max) || 256;
+    
+    switch (event.key) {
+        case 'ArrowUp':
+            event.preventDefault();
+            currentHeight = Math.min(maxHeight, currentHeight + step);
+            heightInput.value = currentHeight;
+            updateSimulation();
+            break;
+        case 'ArrowDown':
+            event.preventDefault();
+            currentHeight = Math.max(minHeight, currentHeight - step);
+            heightInput.value = currentHeight;
+            updateSimulation();
+            break;
+        case ' ':
+            event.preventDefault();
+            // Toggle sort mode
+            sortMode = !sortMode;
+            const sortModeToggle = document.getElementById('sortModeToggle');
+            sortModeToggle.textContent = sortMode ? 'Sort Rows: ON' : 'Sort Rows: OFF';
+            sortModeToggle.classList.toggle('active', sortMode);
+            
+            if (sortMode) {
+                // Enable sort mode - store original tree
+                if (tree && tree.length > 0) {
+                    originalTree = JSON.parse(JSON.stringify(tree)); // Deep copy
+                    // Redraw all rows with sorting applied
+                    redrawAllRowsSorted();
+                }
+            } else {
+                // Disable sort mode - restore original tree and redraw
+                if (originalTree && tree.length > 0) {
+                    tree = JSON.parse(JSON.stringify(originalTree));
+                    redrawAllRowsSorted();
+                }
+            }
+            break;
+    }
+}
+
+// Clear the foreground canvas
+function clearForegroundCanvas() {
+    foregroundCtx.clearRect(0, 0, foregroundCanvas.width, foregroundCanvas.height);
+}
+
+// Draw mouse line on foreground canvas
+function drawMouseLineOnForeground() {
+    if (!tree || H === 0) return;
+    
+    const margin = 0;
+    const availableWidth = canvas.width - 2 * margin;
+    const availableHeight = canvas.height - 2 * margin;
+    const rowHeight = availableHeight / H;
+    
+    // Clear previous line
+    clearForegroundCanvas();
+    
+    // Only draw the mouse line if mouse is within table bounds
+    if (mouseX !== null && mouseY !== null && 
+        mouseX >= margin && mouseX <= margin + availableWidth &&
+        mouseY >= margin && mouseY <= margin + availableHeight) {
+        drawMouseLine(margin, availableWidth, availableHeight, rowHeight);
+        calculateAndLogArc(margin, availableWidth);
+    }
+}
+
+// Draw vertical line at mouse position on foreground canvas
+function drawMouseLine(margin, availableWidth, availableHeight, rowHeight) {
+    // Prepare symbol first so we can reserve space for it
+    const symbol = YOU_SYMBOL;
+    const fontSizePx = 24;
+    foregroundCtx.font = `bold ${fontSizePx}px Arial`;
+    foregroundCtx.textAlign = 'center';
+    foregroundCtx.textBaseline = 'top';
+    foregroundCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+
+    // Estimate symbol height (fallback to font size if metrics unsupported)
+    const metrics = foregroundCtx.measureText(symbol);
+    const symbolHeight = (metrics.actualBoundingBoxAscent && metrics.actualBoundingBoxDescent)
+        ? (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)
+        : fontSizePx;
+
+    // Compute Y for symbol and for the end of the dashed line so they don't overlap
+    const symbolY = Math.min(margin + availableHeight + 2, foregroundCanvas.height - symbolHeight);
+    const lineEndY = Math.max(margin, Math.min(margin + availableHeight, symbolY - 2));
+
+    // Draw dashed line up to just above the symbol
+    foregroundCtx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+    foregroundCtx.lineWidth = 2;
+    foregroundCtx.setLineDash([5, 5]);
+    foregroundCtx.beginPath();
+    foregroundCtx.moveTo(mouseX, margin);
+    foregroundCtx.lineTo(mouseX, lineEndY);
+    foregroundCtx.stroke();
+    foregroundCtx.setLineDash([]); // Reset line dash
+
+    // Draw the symbol at the bottom of the line
+    foregroundCtx.fillText(symbol, mouseX, symbolY);
+}
+
+const mapNormToMinMaxRange = (minBound, maxBound, normValue) =>
+    normValue.times(maxBound.minus(minBound)).plus(minBound)
+
+const mapValueFromMinMaxRange = (minBound, maxBound, value) =>
+    (value.minus(minBound)).dividedBy(maxBound.minus(minBound))
+
+
+const decimalCumSum = arr => arr.reduce((acc, val) => [...acc, val.plus((acc.at(-1) || Decimal(0)))], []);
+
+const sum = arr => arr.reduce((acc, val) => acc + val, 0)
+
+const computeLocalBranchBounds = (branchingWeights) => {
+    const branchingWeightsAsDecimal = branchingWeights.map(weight => Decimal(weight));
+    const total = branchingWeightsAsDecimal.reduce((sum, weight) => sum.plus(weight), Decimal(0));
+    const weights = branchingWeightsAsDecimal.map(weight => weight.dividedBy(total));
+    return [Decimal(0), ...decimalCumSum(weights)].map(b => b.clamp(Decimal(0), Decimal(1)));
+}
+
+// Calculate and log the arc
+function calculateAndLogArc(margin, availableWidth) {
+
+  // Where the mouse's X-coordinate actually is, normalized between 0 and 1, on the table
+  const globalCursorX = Decimal((mouseX - margin) / availableWidth).clamp(Decimal(0), Decimal(1));
+
+  // The local branch bounds are basically X-coordinate of the set of edges after you successively split 
+  const localBranchBounds = computeLocalBranchBounds(B) // [Decimal(0), Decimal(1).dividedBy(3), Decimal(1)] // TODO: Calculate this from branchingWeights
+  const getBranchFromCursor = (localCursorX) => {
+    if (localCursorX.lte(0)) return 0;
+    if (localCursorX.gte(1)) return localBranchBounds.length - 2;
+    const idx = localBranchBounds.findIndex(bp => localCursorX.lt(bp));
+    return idx === -1 ? undefined : idx - 1;
+  }
+
+//   console.log("localBranchBounds", localBranchBounds);
+  
+  // Calculate the branches that the mouse is in by iteratively squeezing bounds after each split
+  const branches = [];
+  let parentMinBound = Decimal(0);
+  let parentMaxBound = Decimal(1);
+  console.log("--------------------------------");
+  // Start from row 0 since we're skipping the original first row
+  for (let row = 0; row < H; row++) {
+      // Find which local X coordinate the cursor is normalized between 0 and 1, within the parent bounds
+      const localCursorX = mapValueFromMinMaxRange(parentMinBound, parentMaxBound, globalCursorX);
+    
+      // Find which branch the local X coordinate corresponds to
+      const branch = getBranchFromCursor(localCursorX);
+      if (branch === undefined || branch < 0) {
+        console.log("oops: branch is undefined or negative:", branch);
+        return branches; // Return early if we can't determine the branch
+      }
+
+      // Find the bounds of this branch
+      const minBound = mapNormToMinMaxRange(parentMinBound, parentMaxBound, localBranchBounds[branch]);
+      const maxBound = mapNormToMinMaxRange(parentMinBound, parentMaxBound, localBranchBounds[branch+1]);
+  
+      branches.push(branch)
+  
+      parentMinBound = minBound;
+      parentMaxBound = maxBound;
+  }
+
+  // Log the branches
+//   console.log("branches = " + branches);
+  
+  // Log the frequencies of each branch
+  const branchFrequency = Array.from({ length: B.length }, (_, i) => 0);
+  branches.forEach(branch => {
+    branchFrequency[branch]++;
+  });
+  const totalFrequency = branches.length;
+  const probability = branchFrequency.map(frequency => Decimal(frequency).dividedBy(totalFrequency));
+//   console.log("probability = " + probability.map(f => f.toDP(2).toString()));
+
+  // Update the on-screen displays
+  updateFrequency(branches);
+
+  return branches
+
+}
+
+// Redraw all rows with current sort mode state
+function redrawAllRowsSorted() {
+    if (!tree || tree.length === 0) return;
+    
+    // Clear the entire canvas first
+    bufferCtx.fillStyle = getBackgroundColor();
+    bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+    
+    const margin = 0;
+    const availableWidth = bufferCanvas.width - 2 * margin;
+    const availableHeight = bufferCanvas.height - 2 * margin;
+    const rowHeight = availableHeight / H;
+    
+    // Redraw all rows with current sort mode
+    for (let rowIndex = 0; rowIndex < Math.min(tree.length, 18); rowIndex++) {
+        const rowCells = tree[rowIndex];
+        const y = margin + rowIndex * rowHeight;
+        const cellHeight = rowHeight - 1;
+        
+        // If sort mode is enabled, sort the cells by branch index before drawing
+        const cellsToDraw = sortMode ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
+        
+        let currentX = margin;
+        for (let cell of cellsToDraw) {
+            const cellWidth = cell.width * availableWidth;
+            const colorIndex = cell.branchIndex % colors.length;
+            
+            bufferCtx.fillStyle = getBranchColor(colorIndex);
+            bufferCtx.fillRect(currentX, y, cellWidth, cellHeight);
+            
+            // Add left border for all cells
+            bufferCtx.fillStyle = '#000000';
+            bufferCtx.fillRect(currentX, y, 1, cellHeight);
+            
+            currentX += cellWidth;
+        }
+        
+        // Draw horizontal line underneath the previous row
+        if (rowIndex > 0) {
+            const previousRowY = margin + (rowIndex - 1) * rowHeight;
+            const previousRowCellHeight = rowHeight - 1;
+            
+            bufferCtx.fillStyle = '#000000';
+            bufferCtx.fillRect(margin, previousRowY + previousRowCellHeight, availableWidth, 1);
+        }
+    }
+    
+    // Copy buffer to main canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bufferCanvas, 0, 0);
+}
+
+// Apply sort mode to the current tree
+async function applySortMode() {
+    if (!tree || tree.length === 0) return;
+    
+    // Create a copy of the tree for sorting
+    const sortedTree = [];
+    
+    for (let rowIndex = 0; rowIndex < tree.length; rowIndex++) {
+        // Check if simulation was cancelled or sort mode disabled
+        if (simulationCancelled || !sortMode) {
+            return;
+        }
+        
+        const originalRow = tree[rowIndex];
+        const sortedRow = [...originalRow].sort((a, b) => a.branchIndex - b.branchIndex);
+        
+        // Add animation delay for each row
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Check again after delay
+        if (simulationCancelled || !sortMode) {
+            return;
+        }
+        
+        // Update the tree with sorted row
+        tree[rowIndex] = sortedRow;
+        
+        // Redraw the row with sorting animation
+        redrawRowWithSorting(rowIndex, sortedRow);
+    }
+}
+
+
+
+// Redraw a row with sorting/unsorting visual effects
+function redrawRowWithSorting(rowIndex, rowCells) {
+    if (!tree || rowIndex >= tree.length) return;
+    
+    // Check if simulation was cancelled
+    if (simulationCancelled) return;
+    
+    const margin = 0;
+    const availableWidth = canvas.width - 2 * margin;
+    const availableHeight = canvas.height - 2 * margin;
+    const rowHeight = availableHeight / H;
+    
+    const y = margin + rowIndex * rowHeight;
+    const cellHeight = rowHeight - 1;
+    
+    // Clear the row area
+    bufferCtx.fillStyle = getBackgroundColor();
+    bufferCtx.fillRect(margin, y, availableWidth, cellHeight);
+    
+    // Draw sorted cells with left border
+    let currentX = margin;
+    for (let cell of rowCells) {
+        const cellWidth = cell.width * availableWidth;
+        const colorIndex = cell.branchIndex % colors.length;
+        
+        bufferCtx.fillStyle = getBranchColor(colorIndex);
+        bufferCtx.fillRect(currentX, y, cellWidth, cellHeight);
+        
+                    // Add left border for all cells
+            bufferCtx.fillStyle = '#000000';
+            bufferCtx.fillRect(currentX, y, 1, cellHeight);
+        
+        currentX += cellWidth;
+    }
+    
+    // Draw horizontal line underneath the previous row
+    if (rowIndex > 0) {
+        const previousRowY = margin + (rowIndex - 1) * rowHeight;
+        const previousRowCellHeight = rowHeight - 1;
+        
+        bufferCtx.fillStyle = '#000000';
+        bufferCtx.fillRect(margin, previousRowY + previousRowCellHeight, availableWidth, 1);
+    }
+    
+    // Copy buffer to main canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bufferCanvas, 0, 0);
+}
+
+// Handle window resize
+window.addEventListener('resize', function() {
+    resizeCanvas();
+    updateSimulation();
+});
+
+// Initialize when page loads
+window.addEventListener('load', function() {
+    init();
+    showHelpPopup();
+});
+
+// Add event listeners for automatic updates
+document.addEventListener('DOMContentLoaded', function() {
+    const weightsInput = document.getElementById('weights');
+    const heightInput = document.getElementById('height');
+    const sortModeToggle = document.getElementById('sortModeToggle');
+    
+    // Cancel operations immediately on any input
+    weightsInput.addEventListener('input', function() {
+        // Cancel any currently running operation immediately
+        if (currentTimeout) {
+            clearTimeout(currentTimeout);
+            currentTimeout = null;
+        }
+        // Start new computation
+        updateSimulation();
+    });
+    
+    heightInput.addEventListener('input', function() {
+        // Cancel any currently running operation immediately
+        if (currentTimeout) {
+            clearTimeout(currentTimeout);
+            currentTimeout = null;
+        }
+        // Start new computation
+        updateSimulation();
+    });
+    
+    // Add sort mode toggle functionality
+    sortModeToggle.addEventListener('click', function() {
+        sortMode = !sortMode;
+        sortModeToggle.textContent = sortMode ? 'Sort Rows: ON' : 'Sort Rows: OFF';
+        sortModeToggle.classList.toggle('active', sortMode);
+        
+        if (sortMode) {
+            // Enable sort mode - store original tree
+            if (tree && tree.length > 0) {
+                originalTree = JSON.parse(JSON.stringify(tree)); // Deep copy
+                // Redraw all rows with sorting applied
+                redrawAllRowsSorted();
+            }
+        } else {
+            // Disable sort mode - restore original tree and redraw
+            if (originalTree && tree.length > 0) {
+                tree = JSON.parse(JSON.stringify(originalTree));
+                redrawAllRowsSorted();
+            }
+        }
+    });
+    
+    // Add mouse event listeners for canvas
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseleave', handleMouseLeave);
+    
+    // Add global keyboard event listeners
+    document.addEventListener('keydown', handleKeyDown);
+    
+    // Run unit tests
+    runUnitTests();
+});
+
+// Unit tests for mapNormValueToMinMaxRange function
+function runUnitTests() {
+    console.log('Running unit tests...');
+    
+    console.assert(
+        mapNormToMinMaxRange(Decimal(4), Decimal(5), Decimal(0.5))
+            .equals(Decimal(4.5)), "mapNormValueToMinMaxRange 1"
+        );
+    console.assert(
+        mapNormToMinMaxRange(Decimal(0), Decimal(1), Decimal(0.7))
+            .equals(Decimal(0.7)), "mapNormValueToMinMaxRange 2"
+        );
+    console.assert(
+        mapNormToMinMaxRange(Decimal(0), Decimal(1), Decimal(0.0))
+            .equals(Decimal(0.0)), "mapNormValueToMinMaxRange 3"
+        );
+    console.assert(
+        mapNormToMinMaxRange(Decimal(0), Decimal(1), Decimal(1))
+            .equals(Decimal(1)), "mapNormValueToMinMaxRange 3"
+        );
+        
+
+    const bounds = computeLocalBranchBounds([Decimal(1), Decimal(2)])
+    console.log("bounds", bounds.map(b => b.toString()));
+    console.assert(bounds[0].equals(Decimal(0)), "computeLocalBranchBounds 1");
+    console.assert(bounds[1].equals(Decimal(1).dividedBy(3)), "computeLocalBranchBounds 2");
+    console.assert(bounds[2].equals(Decimal(1)), "computeLocalBranchBounds 3");
+    
+
+        
+    console.log('Done running unit tests...');
+}
+
+// Test function for background color mixing
+function testBackgroundColor() {
+    console.log('Testing background color mixing...');
+    console.log('Current weights:', getBranchingWeights());
+    console.log('Current colors:', colors);
+    console.log('Background color result:', getBackgroundColor());
+}
+
+// Test function for Decimal.js precision
+function testDecimalPrecision() {
+    console.log('Testing Decimal.js precision...');
+    console.log('Decimal.js config:', Decimal.config());
+    
+    // Test high precision calculation
+    const a = Decimal(1).dividedBy(3);
+    const b = a.times(3);
+    console.log('1/3 =', a.toString());
+    console.log('(1/3) * 3 =', b.toString());
+    console.log('Precision loss?', !b.equals(1));
+    
+    // Test convergence scenario
+    let x = Decimal(1);
+    for (let i = 0; i < 100; i++) {
+        x = x.dividedBy(2);
+    }
+    console.log('After 100 divisions by 2:', x.toString());
+    console.log('Number of decimal places:', x.dp());
+}
+</script>
+
+</body>
+</html>

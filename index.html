@@ -242,12 +242,16 @@ body, html {
 </head>
 <body>
     <div class="ui-container">
-    <div id="color-legend" class="color-legend" style="margin-left: 20px;">
-      <h3>Branch ratios</h3>
-      <div id="legend-items"></div>
-      <h3>Frequency</h3>
-      <div id="frequency-items"></div>
-    </div>
+          <div id="color-legend" class="color-legend" style="margin-left: 20px;">
+        <h3>Branch ratios</h3>
+        <div id="legend-items"></div>
+        <h3>Frequency</h3>
+        <div id="frequency-items"></div>
+        <h3>Cursor Time</h3>
+        <div style="color: white; font-family: Arial, sans-serif; font-size: 14px; text-align: center;">
+          Time: <span id="cursor-time-display">17</span>
+        </div>
+      </div>
           <div class="controls">
         <label>Branch ratios (comma separated):</label><input type="text" id="weights" value="1,2" style="width: 100px;">
         <label>Time:</label><input type="number" id="height" min="1" max="256" style="width: 60px;">
@@ -257,6 +261,12 @@ body, html {
         </div>
       </div>
     <div style="width: 150px;"></div>
+  </div>
+  
+  <div id="cursor-time-container" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: center; align-items: center; padding: 10px; background: rgba(0, 0, 0, 0.8); border-top: 1px solid #333;">
+    <div style="color: white; font-family: Arial, sans-serif; font-size: 14px;">
+      Time: <span id="bottom-cursor-time">17</span>
+    </div>
   </div>
   
   <div class="help-popup" id="help-popup">
@@ -277,7 +287,7 @@ body, html {
       <li>"<u>Time</u>" is the height of the visualization: it's how many branches "you" have encountered.</li>
       <li>The "Frequency" counts how many times each color branch was encountered in your history.</li> 
       <li>Tip: press "up" and "down" to adjust the time.</li>
-      <li>Tip: move the mouse to adjust where "you" are.</li>
+              <li>Tip: move the mouse horizontally to adjust where "you" are, vertically to adjust the time.</li>
     </ul>
   </div>
   <div class="canvas-container">
@@ -288,7 +298,12 @@ body, html {
 <script>
 // Global Constants
 const YOU_SYMBOL = '𖨆';
-const TIMEOUT_MS = 500; // Timeout after 2 seconds (increased from 500ms)
+const TIMEOUT_MS = 500; // Timeout after 500ms
+const MAX_TIME_HEIGHT = 256; // Maximum allowed time height value
+const MOUSE_LINE_FONT_SIZE = 24; // Font size for mouse line symbol
+const MOUSE_SYMBOL_Y_OFFSET = 96; // X offset for mouse symbol positioning
+const HELP_POPUP_PROTECTION_DELAY = 500; // Delay before help popup can be dismissed (ms)
+console.log('HELP_POPUP_PROTECTION_DELAY constant defined as:', HELP_POPUP_PROTECTION_DELAY);
 let B = [1, 1];
 let H = 17;
 let currentTimeout = null;
@@ -302,6 +317,8 @@ let rowsCompleted = 0; // Track how many rows have been completed
 let sortMode = false; // Track whether sort mode is enabled
 let originalTree = null; // Store the original unsorted tree structure
 let helpPopupProtected = true; // Flag to protect help popup for first 500ms
+console.log('Initial helpPopupProtected:', helpPopupProtected);
+let cursorTime = 17; // Current time based on cursor Y position
 
 // Canvas setup
 const canvas = document.getElementById('canvas');
@@ -860,47 +877,89 @@ function updateFrequency(branches) {
 
 // Show help popup
 function showHelpPopup() {
+    console.log('showHelpPopup called');
     const helpPopup = document.getElementById('help-popup');
     if (helpPopup) {
         helpPopup.style.display = 'block';
     }
     
     // Set mouse coordinates to center of screen and draw the line
-    mouseX = canvas.width / 2 - 96;
+    mouseX = canvas.width / 2 - MOUSE_SYMBOL_Y_OFFSET;
     mouseY = canvas.height / 2;
+    
+    // Set initial cursor time based on Y position
+    const margin = 0;
+    const availableHeight = canvas.height - 2 * margin;
+    const rowHeight = availableHeight / H;
+    const cursorRow = Math.floor((mouseY - margin) / rowHeight);
+    cursorTime = Math.max(1, Math.min(MAX_TIME_HEIGHT, cursorRow + 1));
+    
     drawMouseLineOnForeground();
     
     // Protect popup for first 500ms
     helpPopupProtected = true;
-    setTimeout(() => {
+    console.log('Help popup protected, setting timer for', HELP_POPUP_PROTECTION_DELAY, 'ms, constant value:', HELP_POPUP_PROTECTION_DELAY);
+    const timeoutId = setTimeout(() => {
+        console.log('Timeout callback executing...');
         helpPopupProtected = false;
-    }, 500);
+        console.log('Help popup protection disabled, timeoutId:', timeoutId, 'helpPopupProtected now:', helpPopupProtected);
+    }, 500); // Using hardcoded value temporarily
+    console.log('Timeout set with ID:', timeoutId, 'for', HELP_POPUP_PROTECTION_DELAY, 'ms');
 }
 
 // Hide help popup
 function hideHelpPopup() {
+    console.log('hideHelpPopup called');
     const helpPopup = document.getElementById('help-popup');
     if (helpPopup) {
         helpPopup.style.display = 'none';
     }
 }
 
-// Handle mouse movement over canvas
+// Handle mouse movement anywhere on the page
 function handleMouseMove(event) {
+    // Get canvas-relative coordinates for drawing
     const rect = canvas.getBoundingClientRect();
     mouseX = event.clientX - rect.left;
     mouseY = event.clientY - rect.top;
     
+    // Check if mouse is within the viewport bounds
+    if (event.clientX < 0 || event.clientY < 0 || 
+        event.clientX > window.innerWidth || event.clientY > window.innerHeight) {
+        // Mouse is outside viewport, clear foreground
+        mouseX = null;
+        mouseY = null;
+        clearForegroundCanvas();
+        return;
+    }
+    
+    // Calculate cursor time based on Y position (only for tree-related calculations)
+    const margin = 0;
+    const availableHeight = canvas.height - 2 * margin;
+    const rowHeight = availableHeight / H;
+    
+    // Only update cursorTime if cursor is within the table bounds (for tree calculations)
+    if (mouseY >= margin && mouseY <= margin + availableHeight) {
+        // Calculate which row the cursor is over
+        const cursorRow = Math.floor((mouseY - margin) / rowHeight);
+        // Clamp the row to valid range and update cursorTime
+        cursorTime = Math.max(1, Math.min(MAX_TIME_HEIGHT, cursorRow + 1));
+    }
+    
     // Hide help popup when mouse moves (only if not protected)
+    console.log('Mouse move - helpPopupProtected:', helpPopupProtected);
     if (!helpPopupProtected) {
+        console.log('Hiding help popup - protection disabled');
         hideHelpPopup();
+    } else {
+        console.log('Help popup still protected, not hiding');
     }
 
-    // Draw the mouse line on foreground canvas
+    // Always draw the mouse line on foreground canvas regardless of position
     drawMouseLineOnForeground();
 }
 
-// Handle mouse leaving canvas
+// Handle mouse leaving the page
 function handleMouseLeave() {
     mouseX = null;
     mouseY = null;
@@ -959,62 +1018,74 @@ function handleKeyDown(event) {
 
 // Clear the foreground canvas
 function clearForegroundCanvas() {
+    // Ensure the canvas is properly cleared by using a more robust clearing method
     foregroundCtx.clearRect(0, 0, foregroundCanvas.width, foregroundCanvas.height);
+    
+    // Also reset the context state to ensure clean drawing
+    foregroundCtx.setTransform(1, 0, 0, 1, 0, 0);
+    foregroundCtx.globalAlpha = 1;
+    foregroundCtx.globalCompositeOperation = 'source-over';
 }
 
 // Draw mouse line on foreground canvas
 function drawMouseLineOnForeground() {
-    if (!tree || H === 0) return;
-    
-    const margin = 0;
-    const availableWidth = canvas.width - 2 * margin;
-    const availableHeight = canvas.height - 2 * margin;
-    const rowHeight = availableHeight / H;
-    
     // Clear previous line
     clearForegroundCanvas();
     
-    // Only draw the mouse line if mouse is within table bounds
-    if (mouseX !== null && mouseY !== null && 
-        mouseX >= margin && mouseX <= margin + availableWidth &&
-        mouseY >= margin && mouseY <= margin + availableHeight) {
+    // Always draw the mouse line if mouse coordinates are available
+    if (mouseX !== null && mouseY !== null) {
+        const margin = 0;
+        const availableWidth = canvas.width - 2 * margin;
+        const availableHeight = canvas.height - 2 * margin;
+        const rowHeight = availableHeight / H;
+        
+        // Always draw the mouse line regardless of position
         drawMouseLine(margin, availableWidth, availableHeight, rowHeight);
-        calculateAndLogArc(margin, availableWidth);
+        
+        // Only calculate arc if tree exists and mouse is within table bounds (for tree-related calculations)
+        if (tree && H > 0 && mouseX >= margin && mouseX <= margin + availableWidth &&
+            mouseY >= margin && mouseY <= margin + availableHeight) {
+            calculateAndLogArc(margin, availableWidth);
+        }
     }
 }
 
 // Draw vertical line at mouse position on foreground canvas
 function drawMouseLine(margin, availableWidth, availableHeight, rowHeight) {
+    // Reset context state to ensure clean drawing
+    foregroundCtx.save();
+    
     // Prepare symbol first so we can reserve space for it
     const symbol = YOU_SYMBOL;
-    const fontSizePx = 24;
+    const fontSizePx = MOUSE_LINE_FONT_SIZE;
     foregroundCtx.font = `bold ${fontSizePx}px Arial`;
     foregroundCtx.textAlign = 'center';
-    foregroundCtx.textBaseline = 'top';
+    foregroundCtx.textBaseline = 'middle';
     foregroundCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
 
-    // Estimate symbol height (fallback to font size if metrics unsupported)
-    const metrics = foregroundCtx.measureText(symbol);
-    const symbolHeight = (metrics.actualBoundingBoxAscent && metrics.actualBoundingBoxDescent)
-        ? (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)
-        : fontSizePx;
+    // Ensure the line is always visible by clamping coordinates to canvas bounds
+    const clampedMouseX = Math.max(0, Math.min(mouseX, foregroundCanvas.width));
+    const clampedMouseY = Math.max(0, Math.min(mouseY, foregroundCanvas.height));
+    
+    // Always draw the line from the very top of the canvas to the cursor position
+    // This ensures the line is visible even when the cursor is outside the table bounds
+    const startY = 0;
 
-    // Compute Y for symbol and for the end of the dashed line so they don't overlap
-    const symbolY = Math.min(margin + availableHeight + 2, foregroundCanvas.height - symbolHeight);
-    const lineEndY = Math.max(margin, Math.min(margin + availableHeight, symbolY - 2));
-
-    // Draw dashed line up to just above the symbol
+    // Draw dashed line from top to cursor position
     foregroundCtx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
     foregroundCtx.lineWidth = 2;
     foregroundCtx.setLineDash([5, 5]);
     foregroundCtx.beginPath();
-    foregroundCtx.moveTo(mouseX, margin);
-    foregroundCtx.lineTo(mouseX, lineEndY);
+    foregroundCtx.moveTo(clampedMouseX, startY);
+    foregroundCtx.lineTo(clampedMouseX, clampedMouseY);
     foregroundCtx.stroke();
     foregroundCtx.setLineDash([]); // Reset line dash
 
-    // Draw the symbol at the bottom of the line
-    foregroundCtx.fillText(symbol, mouseX, symbolY);
+    // Draw the symbol at the cursor position (clamped to canvas bounds)
+    foregroundCtx.fillText(symbol, clampedMouseX, clampedMouseY);
+    
+    // Restore context state
+    foregroundCtx.restore();
 }
 
 const mapNormToMinMaxRange = (minBound, maxBound, normValue) =>
@@ -1038,6 +1109,18 @@ const computeLocalBranchBounds = (branchingWeights) => {
 // Calculate and log the arc
 function calculateAndLogArc(margin, availableWidth) {
 
+  // Update the cursor time display
+  const cursorTimeElement = document.getElementById('cursor-time-display');
+  if (cursorTimeElement) {
+      cursorTimeElement.textContent = cursorTime;
+  }
+  
+  // Update the bottom cursor time display
+  const bottomCursorTimeElement = document.getElementById('bottom-cursor-time');
+  if (bottomCursorTimeElement) {
+      bottomCursorTimeElement.textContent = cursorTime;
+  }
+
   // Where the mouse's X-coordinate actually is, normalized between 0 and 1, on the table
   const globalCursorX = Decimal((mouseX - margin) / availableWidth).clamp(Decimal(0), Decimal(1));
 
@@ -1058,7 +1141,7 @@ function calculateAndLogArc(margin, availableWidth) {
   let parentMaxBound = Decimal(1);
   console.log("--------------------------------");
   // Start from row 0 since we're skipping the original first row
-  for (let row = 0; row < H; row++) {
+  for (let row = 0; row < cursorTime; row++) {
       // Find which local X coordinate the cursor is normalized between 0 and 1, within the parent bounds
       const localCursorX = mapValueFromMinMaxRange(parentMinBound, parentMaxBound, globalCursorX);
     
@@ -1294,9 +1377,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Add mouse event listeners for canvas
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseleave', handleMouseLeave);
+    // Add mouse event listener for the entire document to capture mouse movements anywhere
+    document.addEventListener('mousemove', handleMouseMove);
     
     // Add global keyboard event listeners
     document.addEventListener('keydown', handleKeyDown);

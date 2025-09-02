@@ -237,7 +237,7 @@ body, html {
     color: white;
 }
 
-.help-popup {
+.help-container {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -260,7 +260,7 @@ body, html {
 }
 
 @media (max-width: 480px) {
-    .help-popup {
+    .help-container {
         padding: 15px 20px;
         width: 95vw;
         max-width: 95vw;
@@ -269,7 +269,7 @@ body, html {
 }
 
 @media (max-width: 320px) {
-    .help-popup {
+    .help-container {
         padding: 10px 15px;
         width: 98vw;
         max-width: 98vw;
@@ -303,7 +303,7 @@ body, html {
   
 
   
-  <div class="help-popup" id="help-popup" style="display: none">
+  <div class="help-container" id="help-container" style="display: none">
     <h1>Welcome to the Everett multiverse.</h1>
     <h2>Motivation</h2>
     <ul style="text-align:left;">
@@ -953,7 +953,7 @@ function updateStatsFrequency(branches) {
 // Show help popup
 function showHelpPopup() {
     console.log('showHelpPopup called');
-    const helpPopup = document.getElementById('help-popup');
+    const helpPopup = document.getElementById('help-container');
     if (helpPopup) {
         helpPopup.style.display = 'block';
     }
@@ -973,7 +973,7 @@ function showHelpPopup() {
 // Hide help popup
 function hideHelpPopup() {
     console.log('hideHelpPopup called');
-    const helpPopup = document.getElementById('help-popup');
+    const helpPopup = document.getElementById('help-container');
     if (helpPopup) {
         helpPopup.style.display = 'none';
     }

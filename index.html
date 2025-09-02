@@ -576,9 +576,8 @@ async function updateSimulation() {
     
     // Update probability display after simulation completes (for height changes)
     if (mouseX !== null && mouseY !== null && tree && tree.length > 0 && maxTime > 0) {
-        const margin = 0;
-        const availableWidth = canvas.width - 2 * margin;
-        updateBranchStatsBasedOnCursor(margin, availableWidth);
+        const availableWidth = canvas.width;
+        updateBranchStatsBasedOnCursor(availableWidth);
     }
     
 
@@ -1129,7 +1128,7 @@ function drawMouseLineOnForeground() {
         // Only calculate arc if tree exists and mouse is within table bounds (for tree-related calculations)
         if (tree && maxTime > 0 && mouseX >= margin && mouseX <= margin + availableWidth &&
             mouseY >= margin && mouseY <= margin + availableHeight) {
-            updateBranchStatsBasedOnCursor(margin, availableWidth);
+            updateBranchStatsBasedOnCursor(availableWidth);
         }
     }
 }
@@ -1188,7 +1187,7 @@ const computeLocalBranchBounds = (branchingWeights) => {
 }
 
 // Calculate and log the arc
-function updateBranchStatsBasedOnCursor(margin, availableWidth) {
+function updateBranchStatsBasedOnCursor(availableWidth) {
 
   // Update the cursor time display
   const cursorTimeElement = document.getElementById('cursor-time-display');
@@ -1197,7 +1196,7 @@ function updateBranchStatsBasedOnCursor(margin, availableWidth) {
   }
 
   // Where the mouse's X-coordinate actually is, normalized between 0 and 1, on the table
-  const globalCursorX = Decimal((mouseX - margin) / availableWidth).clamp(Decimal(0), Decimal(1));
+  const globalCursorX = Decimal(mouseX / availableWidth).clamp(Decimal(0), Decimal(1));
 
   // The local branch bounds are basically X-coordinate of the set of edges after you successively split 
   const localBranchBounds = computeLocalBranchBounds(branchRatios) // [Decimal(0), Decimal(1).dividedBy(3), Decimal(1)] // TODO: Calculate this from branchingWeights

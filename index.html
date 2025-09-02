@@ -279,7 +279,7 @@ body, html {
 </style>
 </head>
 <body>
-    <div class="popup-container">
+    <div class="popup-container" style="display: none">
       <div id="stats-container" class="stats-container" style="margin-left: 20px;">
         <h3>Branch ratios</h3>
         <div id="stats-branch-ratio-items"></div>
@@ -303,7 +303,7 @@ body, html {
   
 
   
-  <div class="help-popup" id="help-popup">
+  <div class="help-popup" id="help-popup" style="display: none">
     <h1>Welcome to the Everett multiverse.</h1>
     <h2>Motivation</h2>
     <ul style="text-align:left;">
@@ -538,7 +538,10 @@ function init() {
     document.getElementById('maxTime').value = maxTime;
     setBranchRatios(branchRatios);
     
-
+    // Set mouse coordinates to center of screen and draw the line
+    mouseX = canvas.width / 2 - MOUSE_SYMBOL_Y_OFFSET;
+    mouseY = canvas.height - 20;
+    drawMouseLineOnForeground();
     
     updateSimulation();
 }
@@ -955,13 +958,6 @@ function showHelpPopup() {
         helpPopup.style.display = 'block';
     }
     
-    // Set mouse coordinates to center of screen and draw the line
-    mouseX = canvas.width / 2 - MOUSE_SYMBOL_Y_OFFSET;
-    mouseY = canvas.height / 2;
-    
-
-    
-    drawMouseLineOnForeground();
     
     // Protect popup for first 500ms
     helpPopupProtected = true;
@@ -1609,7 +1605,7 @@ window.addEventListener('resize', function() {
 // Initialize when page loads
 window.addEventListener('load', function() {
     init();
-    showHelpPopup();
+    // showHelpPopup();
 });
 
 // Add event listeners for automatic updates

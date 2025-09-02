@@ -283,7 +283,7 @@ body, html {
       </div>
           <div class="controls">
         <label>Branch ratios (comma separated):</label><input type="text" id="weights" value="1,2" style="width: 100px;">
-        <label>Time:</label><input type="number" id="height" min="1" max="256" style="width: 60px;">
+        <label>Max Time:</label><input type="number" id="maxTime" min="1" max="256" style="width: 60px;">
         <div class="sort-button-container">
           <div class="sort-tooltip">This is just to visually show that branch ratios are conserved over time.</div>
           <button id="sortModeToggle" class="sort-toggle" style="display: none;">Sort Rows: OFF</button>
@@ -483,8 +483,8 @@ function getBranchColor(index) {
 
 // Get height with default value
 function getHeight() {
-    const heightInput = document.getElementById('height').value;
-    const height = parseInt(heightInput);
+    const maxTimeInput = document.getElementById('maxTime').value;
+    const height = parseInt(maxTimeInput);
     return isNaN(height) || height <= 0 ? 1 : height;
 }
 
@@ -503,7 +503,7 @@ function getBranchingWeights() {
 // Initialize simulation
 function init() {
     // Initialize input values from global variables
-    document.getElementById('height').value = H;
+    document.getElementById('maxTime').value = H;
     document.getElementById('weights').value = B.join(',');
     
 
@@ -1052,26 +1052,26 @@ function handleMouseUp(event) {
 
 // Handle keyboard events
 function handleKeyDown(event) {
-    const heightInput = document.getElementById('height');
-    let currentHeight = parseInt(heightInput.value) || 1;
+    const maxTimeInput = document.getElementById('maxTime');
+    let currentHeight = parseInt(maxTimeInput.value) || 1;
     // If key is held down, browser fires repeated keydown events with event.repeat = true
     const step = event.repeat ? 4 : 1;
     
     // Read min/max values from the input field
-    const minHeight = parseInt(heightInput.min) || 1;
-    const maxHeight = parseInt(heightInput.max) || 256;
+    const minHeight = parseInt(maxTimeInput.min) || 1;
+    const maxHeight = parseInt(maxTimeInput.max) || 256;
     
     switch (event.key) {
         case 'ArrowUp':
             event.preventDefault();
             currentHeight = Math.min(maxHeight, currentHeight + step);
-            heightInput.value = currentHeight;
+            maxTimeInput.value = currentHeight;
             updateSimulation();
             break;
         case 'ArrowDown':
             event.preventDefault();
             currentHeight = Math.max(minHeight, currentHeight - step);
-            heightInput.value = currentHeight;
+            maxTimeInput.value = currentHeight;
             updateSimulation();
             break;
         case ' ':
@@ -1408,7 +1408,7 @@ window.addEventListener('load', function() {
 // Add event listeners for automatic updates
 document.addEventListener('DOMContentLoaded', function() {
     const weightsInput = document.getElementById('weights');
-    const heightInput = document.getElementById('height');
+    const maxTimeInput = document.getElementById('maxTime');
     const sortModeToggle = document.getElementById('sortModeToggle');
     
     // Cancel operations immediately on any input
@@ -1422,7 +1422,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateSimulation();
     });
     
-    heightInput.addEventListener('input', function() {
+    maxTimeInput.addEventListener('input', function() {
         // Cancel any currently running operation immediately
         if (currentTimeout) {
             clearTimeout(currentTimeout);

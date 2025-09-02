@@ -1024,6 +1024,18 @@ function handleMouseLeave() {
 function handleMouseDown(event) {
     // Handle both mouse and touch events
     if (event.button === 0 || event.type === 'touchstart') { // Left mouse button or touch
+        // For touch events, update coordinates immediately before starting drag
+        if (event.type === 'touchstart') {
+            const rect = canvas.getBoundingClientRect();
+            const touch = event.touches[0];
+            const touchX = (touch.clientX - rect.left) * (canvas.width / rect.width);
+            const touchY = (touch.clientY - rect.top) * (canvas.height / rect.height);
+            
+            // Update coordinates to touch location
+            mouseX = touchX;
+            mouseY = touchY;
+        }
+        
         isDragging = true;
         lockedX = mouseX; // Lock the current X position
     }

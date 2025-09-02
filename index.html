@@ -325,6 +325,8 @@ body, html {
 const TIMEOUT_MS = 500; // Timeout after 500ms
 const MIN_MAX_TIME = 1; // Minimum allowed maxTime value
 const MAX_MAX_TIME = 256; // Maximum allowed maxTime value
+const COMPRESSED_ROWS_START = 10; // Row where compression begins
+const TOTAL_ROWS = 128; // Total rows to show (10 normal + 118 compressed)
 const MOUSE_SYMBOL_Y_OFFSET = 96; // X offset for mouse symbol positioning
 const HELP_POPUP_PROTECTION_DELAY = 500; // Delay before help popup can be dismissed (ms)
 console.log('HELP_POPUP_PROTECTION_DELAY constant defined as:', HELP_POPUP_PROTECTION_DELAY);
@@ -497,6 +499,17 @@ function setBranchRatios(values) {
     branchRatios = values;
 }
 
+// Calculate row height based on row index
+function getRowHeight(rowIndex, availableHeight) {
+    if (rowIndex < COMPRESSED_ROWS_START) {
+        // First 10 rows: divide screen equally by maxTime
+        return availableHeight / maxTime;
+    } else {
+        // After COMPRESSED_ROWS_START, rows are not drawn individually
+        return 0;
+    }
+}
+
 // Clear current timeout and reset the variable
 function clearCurrentTimeout() {
     if (currentTimeout) {
@@ -559,19 +572,14 @@ async function updateSimulation() {
         const margin = 0;
         const availableWidth = canvas.width - 2 * margin;
         const availableHeight = canvas.height - 2 * margin;
-        const rowHeight = availableHeight / maxTime;
         
-        // Draw gray rows for the remaining rows based on actual progress
-        const drawnRows = Math.max(1, rowsCompleted); // Use actual progress instead of hardcoded 1
-        drawGrayRows(drawnRows, margin, availableWidth, availableHeight, rowHeight);
+        // Draw background rectangle for remaining area if we've drawn enough rows
+        if (rowsCompleted >= COMPRESSED_ROWS_START) {
+            drawBackgroundRectangle(margin, availableWidth, availableHeight);
+        }
         
         // Show crash icon on canvas at bottom center
         drawTimeoutIndicator();
-        
-        // Force a redraw to ensure gray rows are visible
-        setTimeout(async () => {
-            drawGrayRows(drawnRows, margin, availableWidth, availableHeight, rowHeight);
-        }, 10);
     }, TIMEOUT_MS);
     
     // Start asynchronous computation
@@ -599,7 +607,6 @@ async function drawSimulationAsync() {
     const margin = 0;
     const availableWidth = bufferCanvas.width - 2 * margin;
     const availableHeight = bufferCanvas.height - 2 * margin;
-    const rowHeight = availableHeight / maxTime;
     
     // Calculate total weight for normalization
     const totalWeight = branchRatios.reduce((sum, weight) => sum + weight, 0);
@@ -613,11 +620,11 @@ async function drawSimulationAsync() {
     updateStats();
     
     // Start asynchronous tree generation and drawing
-    await generateTreeAsync(totalWeight, margin, availableWidth, availableHeight, rowHeight);
+    await generateTreeAsync(totalWeight, margin, availableWidth, availableHeight);
 }
 
 // Generate tree and draw asynchronously
-async function generateTreeAsync(totalWeight, margin, availableWidth, availableHeight, rowHeight) {
+async function generateTreeAsync(totalWeight, margin, availableWidth, availableHeight) {
     tree = []; // Store in global variable
     let currentRow = 0;
     
@@ -634,18 +641,18 @@ async function generateTreeAsync(totalWeight, margin, availableWidth, availableH
     tree.push(firstRow);
     
     // Draw first row immediately
-    drawRow(0, tree[0], margin, availableWidth, availableHeight, rowHeight);
+    drawRow(0, tree[0], margin, availableWidth, availableHeight);
     
     // Continue with subsequent rows asynchronously
-    await generateNextRowAsync(tree, currentRow, totalWeight, margin, availableWidth, availableHeight, rowHeight);
+    await generateNextRowAsync(tree, currentRow, totalWeight, margin, availableWidth, availableHeight);
 }
 
 // Generate next row asynchronously
-async function generateNextRowAsync(localTree, currentRow, totalWeight, margin, availableWidth, availableHeight, rowHeight) {
-    // Check if we should continue - only draw first 18 rows
-    if (currentRow >= 18) {
-        // Always draw gray rows after row 18, regardless of target height
-        drawGrayRows(18, margin, availableWidth, availableHeight, rowHeight);
+async function generateNextRowAsync(localTree, currentRow, totalWeight, margin, availableWidth, availableHeight) {
+    // Check if we should continue - only draw first COMPRESSED_ROWS_START rows
+    if (currentRow >= COMPRESSED_ROWS_START) {
+        // Draw background rectangle for remaining area
+        drawBackgroundRectangle(margin, availableWidth, availableHeight);
         
         // Redraw timeout indicator if timeout occurred
         if (timeoutOccurred) {
@@ -668,11 +675,11 @@ async function generateNextRowAsync(localTree, currentRow, totalWeight, margin, 
     const prevRow = localTree[currentRow];
     
     // Process cells in chunks to avoid blocking
-    await processCellsAsync(newRow, prevRow, totalWeight, currentRow, margin, availableWidth, availableHeight, rowHeight, localTree);
+    await processCellsAsync(newRow, prevRow, totalWeight, currentRow, margin, availableWidth, availableHeight, localTree);
 }
 
 // Process cells asynchronously
-async function processCellsAsync(newRow, prevRow, totalWeight, currentRow, margin, availableWidth, availableHeight, rowHeight, localTree) {
+async function processCellsAsync(newRow, prevRow, totalWeight, currentRow, margin, availableWidth, availableHeight, localTree) {
     const chunkSize = 100; // Process 100 cells at a time
     
     for (let cellIndex = 0; cellIndex < prevRow.length; cellIndex += chunkSize) {
@@ -706,24 +713,25 @@ async function processCellsAsync(newRow, prevRow, totalWeight, currentRow, margi
     
     // Finished this row, add to tree and draw
     localTree.push(newRow);
-    drawRow(currentRow + 1, newRow, margin, availableWidth, availableHeight, rowHeight);
+    drawRow(currentRow + 1, newRow, margin, availableWidth, availableHeight);
     
     // Continue with next row
-    await generateNextRowAsync(localTree, currentRow + 1, totalWeight, margin, availableWidth, availableHeight, rowHeight);
+    await generateNextRowAsync(localTree, currentRow + 1, totalWeight, margin, availableWidth, availableHeight);
 }
 
 // Draw a single row
-function drawRow(rowIndex, rowCells, margin, availableWidth, availableHeight, rowHeight) {
+function drawRow(rowIndex, rowCells, margin, availableWidth, availableHeight) {
     // Don't draw if timeout occurred or simulation was cancelled
     if (timeoutOccurred || simulationCancelled) {
         return;
     }
     
-    // Only draw the first 18 rows (0-17)
-    if (rowIndex >= 18) {
+    // Only draw up to COMPRESSED_ROWS_START rows
+    if (rowIndex >= COMPRESSED_ROWS_START) {
         return;
     }
     
+    const rowHeight = getRowHeight(rowIndex, availableHeight);
     const y = margin + rowIndex * rowHeight;
     const cellHeight = rowHeight - 1; // 1px gap between rows
     
@@ -752,8 +760,9 @@ function drawRow(rowIndex, rowCells, margin, availableWidth, availableHeight, ro
     // Draw 1px black line underneath the PREVIOUS row (above current row)
     // Only draw this line if we're not on the first row
     if (rowIndex > 0) {
-        const previousRowY = margin + (rowIndex - 1) * rowHeight;
-        const previousRowCellHeight = rowHeight - 1;
+        const previousRowHeight = getRowHeight(rowIndex - 1, availableHeight);
+        const previousRowY = margin + (rowIndex - 1) * previousRowHeight;
+        const previousRowCellHeight = previousRowHeight - 1;
         
         bufferCtx.fillStyle = '#000000';
         bufferCtx.fillRect(margin, previousRowY + previousRowCellHeight, availableWidth, 1);
@@ -781,16 +790,22 @@ function drawTimeoutIndicator() {
 }
 
 // Draw gray rows for remaining rows after timeout
-function drawGrayRows(startRow, margin, availableWidth, availableHeight, rowHeight) {
-    if (startRow >= maxTime) return;
+function drawGrayRows(startRow, margin, availableWidth, availableHeight) {
+    if (startRow >= TOTAL_ROWS) return;
     
-    const startY = margin + startRow * rowHeight;
-    const remainingHeight = availableHeight - (startRow * rowHeight);
+    let startY;
+    if (startRow < COMPRESSED_ROWS_START) {
+        // Still in normal rows section
+        startY = margin + startRow * getRowHeight(startRow, availableHeight);
+    } else {
+        // After COMPRESSED_ROWS_START, start from where the last normal row ended
+        startY = margin + COMPRESSED_ROWS_START * getRowHeight(COMPRESSED_ROWS_START - 1, availableHeight);
+    }
     
-    // Draw a single gray rectangle covering all remaining space
-    // Start 1 pixel higher to cover the gap from the last row
+    // Draw a single background rectangle covering all remaining space
+    const remainingHeight = availableHeight - startY;
     bufferCtx.fillStyle = getBackgroundColor();
-    bufferCtx.fillRect(margin, startY - 1, availableWidth, remainingHeight + 1);
+    bufferCtx.fillRect(margin, startY, availableWidth, remainingHeight);
     
     // Copy buffer to main canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -987,14 +1002,33 @@ function handleMouseMove(event) {
     // Calculate cursor time based on Y position (only for tree-related calculations)
     const margin = 0;
     const availableHeight = canvas.height - 2 * margin;
-    const rowHeight = availableHeight / maxTime;
     
     // Only update cursorTime if cursor is within the table bounds (for tree calculations)
     if (mouseY >= margin && mouseY <= margin + availableHeight) {
-        // Calculate which row the cursor is over
-        const cursorRow = Math.floor((mouseY - margin) / rowHeight);
-        // Clamp the row to valid range and update cursorTime
-        cursorTime = Math.max(1, Math.min(maxTime, cursorRow + 1));
+        // Calculate which row the cursor is over using the new row height system
+        let cursorRow = 0;
+        let accumulatedHeight = 0;
+        
+        // Check if cursor is in the first 10 rows (normal size)
+        if (mouseY < margin + availableHeight / 2) {
+            const normalRowHeight = availableHeight / maxTime;
+            cursorRow = Math.floor((mouseY - margin) / normalRowHeight);
+            cursorTime = Math.max(1, Math.min(maxTime, cursorRow + 1));
+        } else {
+            // Cursor is in the background area - calculate a proportional position
+            // This allows the cursor to "move" through the background area naturally
+            const backgroundStartY = margin + availableHeight / 2;
+            const backgroundHeight = availableHeight / 2;
+            const backgroundY = mouseY - backgroundStartY;
+            const backgroundRatio = backgroundY / backgroundHeight;
+            
+            // Map the background ratio to a range that extends beyond COMPRESSED_ROWS_START
+            // This gives the illusion of moving through more rows
+            const extendedRange = 128; // Use a fixed high value to allow cursor to go much higher
+            const backgroundRow = Math.floor(backgroundRatio * (extendedRange - COMPRESSED_ROWS_START));
+            cursorTime = COMPRESSED_ROWS_START + backgroundRow;
+            cursorTime = Math.max(COMPRESSED_ROWS_START, Math.min(extendedRange, cursorTime));
+        }
     }
     
     // Hide help popup when mouse moves (only if not protected)
@@ -1117,10 +1151,9 @@ function drawMouseLineOnForeground() {
             const margin = 0;
             const availableWidth = canvas.width - 2 * margin;
             const availableHeight = canvas.height - 2 * margin;
-            const rowHeight = availableHeight / maxTime;
         
         // Always draw the mouse line regardless of position
-        drawMouseLine(margin, availableWidth, availableHeight, rowHeight);
+        drawMouseLine(margin, availableWidth, availableHeight);
         
         // Only calculate arc if tree exists and mouse is within table bounds (for tree-related calculations)
         if (tree && maxTime > 0 && mouseX >= margin && mouseX <= margin + availableWidth &&
@@ -1131,7 +1164,7 @@ function drawMouseLineOnForeground() {
 }
 
 // Draw vertical line at mouse position on foreground canvas
-function drawMouseLine(margin, availableWidth, availableHeight, rowHeight) {
+function drawMouseLine(margin, availableWidth, availableHeight) {
     // Reset context state to ensure clean drawing
     foregroundCtx.save();
 
@@ -1212,6 +1245,7 @@ function calculateAndUpdateStats(availableWidth) {
   let parentMaxBound = Decimal(1);
   console.log("--------------------------------");
   // Start from row 0 since we're skipping the original first row
+  // Calculate up to cursorTime, even if it goes beyond drawn rows
   for (let row = 0; row < cursorTime; row++) {
       // Find which local X coordinate the cursor is normalized between 0 and 1, within the parent bounds
       const localCursorX = mapValueFromMinMaxRange(parentMinBound, parentMaxBound, globalCursorX);
@@ -1250,11 +1284,11 @@ function redrawAllRowsSorted() {
     const margin = 0;
     const availableWidth = bufferCanvas.width - 2 * margin;
     const availableHeight = bufferCanvas.height - 2 * margin;
-    const rowHeight = availableHeight / maxTime;
     
-    // Redraw all rows with current sort mode
-    for (let rowIndex = 0; rowIndex < Math.min(tree.length, 18); rowIndex++) {
+    // Redraw all rows with current sort mode (only up to COMPRESSED_ROWS_START)
+    for (let rowIndex = 0; rowIndex < Math.min(tree.length, COMPRESSED_ROWS_START); rowIndex++) {
         const rowCells = tree[rowIndex];
+        const rowHeight = getRowHeight(rowIndex, availableHeight);
         const y = margin + rowIndex * rowHeight;
         const cellHeight = rowHeight - 1;
         
@@ -1278,13 +1312,17 @@ function redrawAllRowsSorted() {
         
         // Draw horizontal line underneath the previous row
         if (rowIndex > 0) {
-            const previousRowY = margin + (rowIndex - 1) * rowHeight;
-            const previousRowCellHeight = rowHeight - 1;
+            const previousRowHeight = getRowHeight(rowIndex - 1, availableHeight);
+            const previousRowY = margin + (rowIndex - 1) * previousRowHeight;
+            const previousRowCellHeight = previousRowHeight - 1;
             
             bufferCtx.fillStyle = '#000000';
             bufferCtx.fillRect(margin, previousRowY + previousRowCellHeight, availableWidth, 1);
         }
     }
+    
+    // Draw background rectangle for remaining area
+    drawBackgroundRectangle(margin, availableWidth, availableHeight);
     
     // Copy buffer to main canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1332,10 +1370,13 @@ function redrawRowWithSorting(rowIndex, rowCells) {
     // Check if simulation was cancelled
     if (simulationCancelled) return;
     
+    // Don't redraw rows after COMPRESSED_ROWS_START
+    if (rowIndex >= COMPRESSED_ROWS_START) return;
+    
     const margin = 0;
     const availableWidth = canvas.width - 2 * margin;
     const availableHeight = canvas.height - 2 * margin;
-    const rowHeight = availableHeight / maxTime;
+    const rowHeight = getRowHeight(rowIndex, availableHeight);
     
     const y = margin + rowIndex * rowHeight;
     const cellHeight = rowHeight - 1;
@@ -1362,8 +1403,9 @@ function redrawRowWithSorting(rowIndex, rowCells) {
     
     // Draw horizontal line underneath the previous row
     if (rowIndex > 0) {
-        const previousRowY = margin + (rowIndex - 1) * rowHeight;
-        const previousRowCellHeight = rowHeight - 1;
+        const previousRowHeight = getRowHeight(rowIndex - 1, availableHeight);
+        const previousRowY = margin + (rowIndex - 1) * previousRowHeight;
+        const previousRowCellHeight = previousRowHeight - 1;
         
         bufferCtx.fillStyle = '#000000';
         bufferCtx.fillRect(margin, previousRowY + previousRowCellHeight, availableWidth, 1);
@@ -1372,6 +1414,16 @@ function redrawRowWithSorting(rowIndex, rowCells) {
     // Copy buffer to main canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(bufferCanvas, 0, 0);
+}
+
+// Draw background rectangle for remaining area after COMPRESSED_ROWS_START rows
+function drawBackgroundRectangle(margin, availableWidth, availableHeight) {
+    const startY = margin + COMPRESSED_ROWS_START * getRowHeight(COMPRESSED_ROWS_START - 1, availableHeight);
+    const remainingHeight = availableHeight - startY;
+    
+    // Draw background rectangle covering all remaining space
+    bufferCtx.fillStyle = getBackgroundColor();
+    bufferCtx.fillRect(margin, startY, availableWidth, remainingHeight);
 }
 
 // Handle window resize

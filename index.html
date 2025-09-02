@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>The Everett Multiverse</title>
   <script src="https://cdn.jsdelivr.net/npm/decimal.js@10.4.3/decimal.min.js"></script>
   <script>
@@ -25,12 +26,20 @@ body, html {
   padding: 0;
   overflow: hidden;
   cursor: none; /* Hide the real cursor */
+  touch-action: none; /* Prevent default touch behaviors */
+  -webkit-touch-callout: none; /* Prevent callout on long press */
+  -webkit-user-select: none; /* Prevent text selection */
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .canvas-container {
     position: relative;
     width: 100vw;
     height: 100vh;
+    touch-action: none; /* Prevent default touch behaviors */
 }
 
 #canvas {
@@ -38,6 +47,7 @@ body, html {
     display: block;
     width: 100%;
     height: 100%;
+    touch-action: none; /* Prevent default touch behaviors */
 }
 
 #foreground-canvas {
@@ -48,6 +58,7 @@ body, html {
     z-index: 10;
     width: 100%;
     height: 100%;
+    touch-action: none; /* Prevent default touch behaviors */
 }
 
 .ui-container {
@@ -936,13 +947,28 @@ function hideHelpPopup() {
 function handleMouseMove(event) {
     // Get canvas-relative coordinates for drawing
     const rect = canvas.getBoundingClientRect();
-    const currentMouseX = event.clientX - rect.left;
-    const currentMouseY = event.clientY - rect.top;
     
-    // Check if mouse is within the viewport bounds
-    if (event.clientX < 0 || event.clientY < 0 || 
-        event.clientX > window.innerWidth || event.clientY > window.innerHeight) {
-        // Mouse is outside viewport, clear foreground
+    // Handle both mouse and touch events properly
+    let clientX, clientY;
+    
+    if (event.touches && event.touches.length > 0) {
+        // Touch event
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+    } else {
+        // Mouse event
+        clientX = event.clientX;
+        clientY = event.clientY;
+    }
+    
+    // Calculate coordinates relative to the canvas element
+    const currentMouseX = (clientX - rect.left) * (canvas.width / rect.width);
+    const currentMouseY = (clientY - rect.top) * (canvas.height / rect.height);
+    
+    // Check if mouse/touch is within the viewport bounds
+    if (clientX < 0 || clientY < 0 || 
+        clientX > window.innerWidth || clientY > window.innerHeight) {
+        // Mouse/touch is outside viewport, clear foreground
         mouseX = null;
         mouseY = null;
         clearForegroundCanvas();
@@ -996,7 +1022,8 @@ function handleMouseLeave() {
 
 // Handle mouse button down - start dragging
 function handleMouseDown(event) {
-    if (event.button === 0) { // Left mouse button only
+    // Handle both mouse and touch events
+    if (event.button === 0 || event.type === 'touchstart') { // Left mouse button or touch
         isDragging = true;
         lockedX = mouseX; // Lock the current X position
     }
@@ -1004,7 +1031,8 @@ function handleMouseDown(event) {
 
 // Handle mouse button up - stop dragging
 function handleMouseUp(event) {
-    if (event.button === 0) { // Left mouse button only
+    // Handle both mouse and touch events
+    if (event.button === 0 || event.type === 'touchend') { // Left mouse button or touch
         isDragging = false;
         lockedX = null; // Release the X position lock
     }
@@ -1421,6 +1449,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mouseup', handleMouseUp);
+    
+    // Add touch event listeners for mobile devices
+    document.addEventListener('touchmove', handleMouseMove, { passive: false });
+    document.addEventListener('touchstart', handleMouseDown, { passive: false });
+    document.addEventListener('touchend', handleMouseUp, { passive: false });
     
     // Add global keyboard event listeners
     document.addEventListener('keydown', handleKeyDown);

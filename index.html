@@ -1158,6 +1158,22 @@ function handleKeyDown(event) {
             setMaxTime(currentHeight);
             updateSimulation();
             break;
+        case 'ArrowRight':
+            event.preventDefault();
+            // Add a new branch with value 1
+            const newRatios = [...branchRatios, 1];
+            setBranchRatios(newRatios);
+            updateSimulation();
+            break;
+        case 'ArrowLeft':
+            event.preventDefault();
+            // Remove the right-most branch if there are at least 2 branches
+            if (branchRatios.length > 1) {
+                const newRatios = branchRatios.slice(0, -1);
+                setBranchRatios(newRatios);
+                updateSimulation();
+            }
+            break;
         case ' ':
             event.preventDefault();
             // Toggle "row sort"" mode

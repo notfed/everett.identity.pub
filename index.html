@@ -323,7 +323,7 @@ body, html {
 <script>
 // Global Constants
 const TIMEOUT_MS = 500; // Timeout after 500ms
-const MAX_TIME_HEIGHT = 256; // Maximum allowed time height value
+const MAX_MAX_TIME = 256; // Maximum allowed maxTime value
 const MOUSE_SYMBOL_Y_OFFSET = 96; // X offset for mouse symbol positioning
 const HELP_POPUP_PROTECTION_DELAY = 500; // Delay before help popup can be dismissed (ms)
 console.log('HELP_POPUP_PROTECTION_DELAY constant defined as:', HELP_POPUP_PROTECTION_DELAY);
@@ -993,7 +993,7 @@ function handleMouseMove(event) {
         // Calculate which row the cursor is over
         const cursorRow = Math.floor((mouseY - margin) / rowHeight);
         // Clamp the row to valid range and update cursorTime
-        cursorTime = Math.max(1, Math.min(MAX_TIME_HEIGHT, cursorRow + 1));
+        cursorTime = Math.max(1, Math.min(maxTime, cursorRow + 1));
     }
     
     // Hide help popup when mouse moves (only if not protected)

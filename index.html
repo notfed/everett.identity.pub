@@ -59,15 +59,26 @@ body, html {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
+    cursor: none;
+    user-select: none; /* Prevent text selection */
+    -webkit-user-select: none; /* Safari support */
+    -moz-user-select: none; /* Firefox support */
+    -ms-user-select: none; /* IE/Edge support */
 }
 
 .controls {
+    cursor: none;
     color: white;
     font-family: Arial, sans-serif;
     background: rgba(0, 0, 0, 0.8);
     padding: 10px 15px;
     border-radius: 5px;
     border: 1px solid #333;
+    cursor: none; /* Hide cursor in controls */
+    user-select: none; /* Prevent text selection */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .controls input, .controls button {
@@ -77,6 +88,7 @@ body, html {
 }
 
 .controls label {
+    cursor: none;
     margin-right: 10px;
 }
 
@@ -154,6 +166,11 @@ body, html {
     width: 150px;
     font-family: Arial, sans-serif;
     font-size: 12px;
+    cursor: none; /* Hide cursor in color legend */
+    user-select: none; /* Prevent text selection */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .color-legend h3 {
@@ -309,6 +326,8 @@ let simulationCancelled = false; // Flag to track if simulation was cancelled
 let currentSimulationPromise = null; // Track the current simulation
 let mouseX = null;
 let mouseY = null;
+let isDragging = false; // Track if we're currently dragging
+let lockedX = null; // Store the locked X position during drag
 let tree = null; // Store the tree structure for arc calculation
 let rowsCompleted = 0; // Track how many rows have been completed
 let sortMode = false; // Track whether sort mode is enabled
@@ -917,8 +936,8 @@ function hideHelpPopup() {
 function handleMouseMove(event) {
     // Get canvas-relative coordinates for drawing
     const rect = canvas.getBoundingClientRect();
-    mouseX = event.clientX - rect.left;
-    mouseY = event.clientY - rect.top;
+    const currentMouseX = event.clientX - rect.left;
+    const currentMouseY = event.clientY - rect.top;
     
     // Check if mouse is within the viewport bounds
     if (event.clientX < 0 || event.clientY < 0 || 
@@ -928,6 +947,18 @@ function handleMouseMove(event) {
         mouseY = null;
         clearForegroundCanvas();
         return;
+    }
+    
+    // Update Y position normally
+    mouseY = currentMouseY;
+    
+    // Update X position based on drag state
+    if (isDragging && lockedX !== null) {
+        // Keep X position locked during drag
+        mouseX = lockedX;
+    } else {
+        // Update X position normally
+        mouseX = currentMouseX;
     }
     
     // Calculate cursor time based on Y position (only for tree-related calculations)
@@ -961,6 +992,22 @@ function handleMouseLeave() {
     mouseX = null;
     mouseY = null;
     clearForegroundCanvas();
+}
+
+// Handle mouse button down - start dragging
+function handleMouseDown(event) {
+    if (event.button === 0) { // Left mouse button only
+        isDragging = true;
+        lockedX = mouseX; // Lock the current X position
+    }
+}
+
+// Handle mouse button up - stop dragging
+function handleMouseUp(event) {
+    if (event.button === 0) { // Left mouse button only
+        isDragging = false;
+        lockedX = null; // Release the X position lock
+    }
 }
 
 // Handle keyboard events
@@ -1370,8 +1417,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Add mouse event listener for the entire document to capture mouse movements anywhere
+    // Add mouse event listeners for the entire document to capture mouse movements and clicks anywhere
     document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mouseup', handleMouseUp);
     
     // Add global keyboard event listeners
     document.addEventListener('keydown', handleKeyDown);

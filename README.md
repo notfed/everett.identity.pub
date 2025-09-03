@@ -8,7 +8,7 @@ See [http://everett.identity.pub/](http://everett.identity.pub/).
 
 - While in the Everett interpretation of quantum mechanics the universe evolves deterministically (according to the [Schrödinger equation](https://en.wikipedia.org/wiki/Schr%C3%B6dinger_equation)), observers see quantum randomness anyway.
 - This is a visual aid to help understand how this occurs.
-- You see, despite the multiverse as a whole being deterministic, if an observer performs a sequence of quantum coin flips, then, after each coin flip, the world branches (think "green=heads, tails=blue") into different observers who see different results, and, after a large number of coin flips, almost all observers will appear to have witnessed a sequence of random results unfold before their eyes. Again, this happens despite the multiverse being deterministic.
+- You see, despite the multiverse as a whole being deterministic, if an observer performs a sequence of quantum coin flips, then, after each coin flip, the world branches (think "green=heads, tails=blue") into different worlds and therefore different observers who see different results, and, after a large number of coin flips, almost all observers will appear to have witnessed a sequence of random results unfold before their eyes. Again, this happens despite the multiverse being deterministic.
 
 ### What am I looking at?
 

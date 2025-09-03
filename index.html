@@ -599,9 +599,6 @@ async function updateSimulation() {
         const availableHeight = canvas.height - 2 * margin;
         
         // No background rectangle needed - all rows are drawn individually
-        
-        // Show crash icon on canvas at bottom center
-        drawTimeoutIndicator();
     }, TIMEOUT_MS);
     
     // Start asynchronous computation
@@ -797,19 +794,6 @@ function drawRow(rowIndex, rowCells, margin, availableWidth, availableHeight) {
     
     // Update progress tracking
     rowsCompleted = Math.max(rowsCompleted, rowIndex + 1);
-    
-    // Redraw timeout indicator if timeout occurred
-    if (timeoutOccurred) {
-        drawTimeoutIndicator();
-    }
-}
-
-// Draw timeout indicator
-function drawTimeoutIndicator() {
-    ctx.fillStyle = '#FF6B6B';
-    ctx.font = 'bold 32px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('...', canvas.width / 2, canvas.height - 50);
 }
 
 // Draw gray rows for remaining rows after timeout

@@ -548,12 +548,15 @@ function init() {
     // Update stats display
     updateStats();
     
-    // Set mouse coordinates to center of screen and draw the line
+    drawInitialLine();
+    
+    updateSimulation();
+}
+
+function drawInitialLine() {
     mouseX = canvas.width * (2.0/3.0);
     mouseY = canvas.height * (6.0/7.0);
     drawMouseLineOnForeground();
-    
-    updateSimulation();
 }
 
 // Update simulation based on current input values

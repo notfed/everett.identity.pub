@@ -16,7 +16,7 @@ See [http://everett.identity.pub/](http://everett.identity.pub/).
 - Each world branches (i.e., divides) into the worlds immediately below it, proportional to the supplied **Branch ratios**.
 - You are `𖨆`. (Your cursor.)
 - The vertical line is your history: i.e., the sequence of branches (and their corresponding colors) you have encountered.
-- **Time** is the height of the visualization: it's how many branches "you" have encountered.
+- **Time** is how far down you are in the visualization: it's how many branches "you" have encountered.
 - The **Frequency** counts how many times each color branch was encountered in your history.
 
 ### Tips

@@ -549,8 +549,8 @@ function init() {
     updateStats();
     
     // Set mouse coordinates to center of screen and draw the line
-    mouseX = canvas.width / 2 - MOUSE_SYMBOL_Y_OFFSET;
-    mouseY = canvas.height / 2;
+    mouseX = canvas.width * (2.0/3.0);
+    mouseY = canvas.height * (6.0/7.0);
     drawMouseLineOnForeground();
     
     updateSimulation();

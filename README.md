@@ -31,8 +31,9 @@ This is just a tool to help visualize this apparent randomness. Specifically, th
 
 | Press...               | To...                                  |
 |------------------------|----------------------------------------|
+| **Click and drag**     | Constrain yourself to one timeline     |
 | **Drag the red line**  | Adjust the branch ratio                |
-| **↑**                  | See more time shown on-screen              |
-| **↓**                  | See less time shown on-screen              |
+| **↑**                  | See more time shown on-screen          |
+| **↓**                  | See less time shown on-screen          |
 | **→**                  | Add a new branch                       |
 | **←**                  | Remove a branch                        |

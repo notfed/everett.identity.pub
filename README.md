@@ -12,7 +12,7 @@ See [http://mw.identity.pub/](http://mw.identity.pub/).
 
 The [many-worlds interpretation of quantum mechanics](https://en.wikipedia.org/wiki/Many-worlds_interpretation) says that the universe evolves deterministically according to the [Schrödinger equation](https://en.wikipedia.org/wiki/Schr%C3%B6dinger_equation).
 
-So where does [quantum randomness](https://en.wikipedia.org/wiki/Quantum_indeterminacy) come from? Well, to put it simply, many-worlds says that this "randomness" is an illusion due to there being multiple versions of "you". This is a visual aid to help you see that for yourself.
+So where does [quantum randomness](https://en.wikipedia.org/wiki/Wave_function_collapse) come from? Well, to put it simply, many-worlds says that this "randomness" is an illusion due to there being multiple versions of "you". This is a visual aid to help you see that for yourself.
 
 ### What am I looking at?
 

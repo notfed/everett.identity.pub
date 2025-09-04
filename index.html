@@ -334,6 +334,7 @@
         let rowSortMode = false;
         let originalTree = null;
         let cursorTime = 48;
+        let initTime = Date.now();
 
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
@@ -1193,6 +1194,11 @@
         }
 
         function handleMouseMove(event) {
+            // Check if 500ms have passed since initialization
+            if (Date.now() - initTime < 500) {
+                return; // No-op until 500ms after init
+            }
+
             // Get canvas-relative coordinates for drawing
             const rect = canvas.getBoundingClientRect();
 
@@ -1806,9 +1812,6 @@
 
         window.addEventListener('load', function () {
             init();
-        });
-
-        document.addEventListener('DOMContentLoaded', function () {
             const branchRatiosInput = document.getElementById('branchRatios');
             const maxTimeInput = document.getElementById('maxTime');
             const rowSortModeToggle = document.getElementById('rowSortModeToggle');

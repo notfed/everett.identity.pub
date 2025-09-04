@@ -1345,7 +1345,7 @@
                     rowSortModeToggle.textContent = rowSortMode ? 'Sort Rows: ON' : 'Sort Rows: OFF';
                     rowSortModeToggle.classList.toggle('active', rowSortMode);
 
-                    redrawAllRows();
+                    drawAllRows();
                     break;
             }
         }
@@ -1510,7 +1510,7 @@
 
         }
 
-        function redrawAllRows() {
+        function drawAllRows() {
             if (!tree || tree.length === 0) return;
 
             const margin = 0;
@@ -1787,7 +1787,7 @@
                 rowSortModeToggle.classList.toggle('active', rowSortMode);
 
                 // Toggle sort mode - just redraw with current tree
-                redrawAllRows();
+                drawAllRows();
             });
 
             // Add mouse event listeners for the entire document to capture mouse movements and clicks anywhere

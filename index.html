@@ -421,6 +421,7 @@ let originalTree = null; // Store the original unsorted tree structure
 let helpPopupProtected = true; // Flag to protect help popup for first 500ms
 console.log('Initial helpPopupProtected:', helpPopupProtected);
 let cursorTime = 48; // Current time based on cursor Y position
+let pageInitTime = null; // Track when page was initialized
 
 // Canvas setup
 const canvas = document.getElementById('canvas');
@@ -599,10 +600,21 @@ function clearCurrentTimeout() {
     }
 }
 
+// Check if 500ms has passed since page initialization
+function isPageInitDelayPassed() {
+    if (pageInitTime === null) {
+        return false;
+    }
+    return (Date.now() - pageInitTime) >= 500;
+}
+
 
 
 // Initialize simulation
 function init() {
+    // Set page initialization time
+    pageInitTime = Date.now();
+    
     // Initialize input values from global variables
     document.getElementById('maxTime').value = maxTime;
     setBranchRatios(branchRatios);
@@ -1307,6 +1319,11 @@ function hideHelpPopup() {
 
 // Handle mouse movement anywhere on the page
 function handleMouseMove(event) {
+    // Ignore mouse/touch events until 500ms after page initialization
+    if (!isPageInitDelayPassed()) {
+        return;
+    }
+    
     // Get canvas-relative coordinates for drawing
     const rect = canvas.getBoundingClientRect();
     
@@ -1402,6 +1419,11 @@ function handleMouseLeave() {
 
 // Handle mouse button down - start dragging
 function handleMouseDown(event) {
+    // Ignore mouse/touch events until 500ms after page initialization
+    if (!isPageInitDelayPassed()) {
+        return;
+    }
+    
     // Handle both mouse and touch events
     if (event.button === 0 || event.type === 'touchstart') { // Left mouse button or touch
         // For touch events, update coordinates immediately before starting drag
@@ -1447,6 +1469,11 @@ function handleMouseDown(event) {
 
 // Handle mouse button up - stop dragging
 function handleMouseUp(event) {
+    // Ignore mouse/touch events until 500ms after page initialization
+    if (!isPageInitDelayPassed()) {
+        return;
+    }
+    
     // Handle both mouse and touch events
     if (event.button === 0 || event.type === 'touchend') { // Left mouse button or touch
         if (isDraggingWall) {

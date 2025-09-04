@@ -23,7 +23,7 @@ This tool is a visual demonstration of that idea. The key takeaway is that, for 
     - A green world, representing heads
     - A blue world, representing tails
 - You are `𖨆`. (Your cursor.)
-- The vertical line represents the sequence of coin flips you've measured
+- The vertical line represents your timeline: the sequence of coin flips you've measured
 - "Your time" shows how many coin flips you've measured
 - "Your measurements" shows the counts and averages of the coin flips you've measured
 

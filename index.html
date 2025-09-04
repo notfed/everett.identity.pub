@@ -715,45 +715,6 @@
             // This is handled by the existing redraw mechanisms
         }
 
-        function drawBackgroundRectangle(margin, availableWidth, availableHeight) {
-            // Calculate where the last row ends
-            let lastRowY;
-            if (128 < COMPRESSED_ROWS_START) {
-                // All rows are normal
-                lastRowY = margin + 128 * getRowHeight(127, availableHeight);
-            } else {
-                // Some rows are compressed
-                const normalRowsHeight = COMPRESSED_ROWS_START * getRowHeight(0, availableHeight);
-                const compressedRowsHeight = (128 - COMPRESSED_ROWS_START) * getRowHeight(COMPRESSED_ROWS_START, availableHeight);
-                lastRowY = margin + normalRowsHeight + compressedRowsHeight;
-            }
-
-            // Draw background for any remaining space
-            if (lastRowY < availableHeight) {
-                const remainingHeight = availableHeight - lastRowY;
-                
-                if (rowSortMode) {
-                    // When sort mode is enabled, draw left half one color, right half another color
-                    const halfWidth = availableWidth / 2;
-                    
-                    // Left half - first color
-                    bufferCtx.fillStyle = getBranchColor(0);
-                    bufferCtx.fillRect(margin, lastRowY, halfWidth, remainingHeight);
-                    
-                    // Right half - second color (or first color if only one branch)
-                    bufferCtx.fillStyle = getBranchColor(1 % branchRatios.length);
-                    bufferCtx.fillRect(margin + halfWidth, lastRowY, halfWidth, remainingHeight);
-                    
-                    // Add border between halves
-                    bufferCtx.fillStyle = '#000000';
-                    bufferCtx.fillRect(margin + halfWidth, lastRowY, 1, remainingHeight);
-                } else {
-                    // When sort mode is not enabled, use the original behavior
-                    bufferCtx.fillStyle = getBackgroundColor();
-                    bufferCtx.fillRect(margin, lastRowY, availableWidth, remainingHeight);
-                }
-            }
-        }
 
         async function updateSimulation() {
             // Cancel any currently running operation
@@ -1566,34 +1527,50 @@
         function redrawAllRowsSorted() {
             if (!tree || tree.length === 0) return;
 
-            // Clear the entire canvas first
-            if (rowSortMode) {
-                // When sort mode is enabled, draw left half one color, right half another color
-                const halfWidth = bufferCanvas.width / 2;
-                
-                // Left half - first color
-                bufferCtx.fillStyle = getBranchColor(0);
-                bufferCtx.fillRect(0, 0, halfWidth, bufferCanvas.height);
-                
-                // Right half - second color (or first color if only one branch)
-                bufferCtx.fillStyle = getBranchColor(1 % branchRatios.length);
-                bufferCtx.fillRect(halfWidth, 0, halfWidth, bufferCanvas.height);
-                
-                // Add border between halves
-                bufferCtx.fillStyle = '#000000';
-                bufferCtx.fillRect(halfWidth, 0, 1, bufferCanvas.height);
-            } else {
-                // When sort mode is not enabled, use the original behavior
-                bufferCtx.fillStyle = getBackgroundColor();
-                bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
-            }
-
             const margin = 0;
             const availableWidth = bufferCanvas.width - 2 * margin;
             const availableHeight = bufferCanvas.height - 2 * margin;
 
-            // Redraw all rows with current sort mode (up to 128)
-            for (let rowIndex = 0; rowIndex < Math.min(tree.length, 128); rowIndex++) {
+            // Step 1: Fill the entire canvas with background color
+            fillCanvasBackground(availableWidth, availableHeight);
+
+            // Step 2: Draw the actual tree rows (up to 128 rows, but with heights based on maxTime)
+            drawTreeRows(margin, availableWidth, availableHeight);
+
+            // Step 3: Fill any remaining space below the tree rows
+            fillRemainingSpaceBelowTree(margin, availableWidth, availableHeight);
+
+            // Step 4: Copy buffer to main canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(bufferCanvas, 0, 0);
+        }
+
+        function fillCanvasBackground(availableWidth, availableHeight) {
+            if (rowSortMode) {
+                // When sort mode is enabled, draw left half one color, right half another color
+                const halfWidth = availableWidth / 2;
+                
+                // Left half - first color
+                bufferCtx.fillStyle = getBranchColor(0);
+                bufferCtx.fillRect(0, 0, halfWidth, availableHeight);
+                
+                // Right half - second color (or first color if only one branch)
+                bufferCtx.fillStyle = getBranchColor(1 % branchRatios.length);
+                bufferCtx.fillRect(halfWidth, 0, halfWidth, availableHeight);
+                
+                // Add border between halves
+                bufferCtx.fillStyle = '#000000';
+                bufferCtx.fillRect(halfWidth, 0, 1, availableHeight);
+            } else {
+                // When sort mode is not enabled, use the original behavior
+                bufferCtx.fillStyle = getBackgroundColor();
+                bufferCtx.fillRect(0, 0, availableWidth, availableHeight);
+            }
+        }
+
+        function drawTreeRows(margin, availableWidth, availableHeight) {
+            // Draw up to maxTime rows (the actual tree data we have)
+            for (let rowIndex = 0; rowIndex < Math.min(tree.length, maxTime); rowIndex++) {
                 const rowCells = tree[rowIndex];
                 const rowHeight = getRowHeight(rowIndex, availableHeight);
                 const y = margin + rowIndex * rowHeight;
@@ -1646,15 +1623,49 @@
                     bufferCtx.fillRect(margin, previousRowY + previousRowCellHeight, availableWidth, 1);
                 }
             }
+        }
 
-            // Draw background rectangle for remaining area
-            drawBackgroundRectangle(margin, availableWidth, availableHeight);
+        function fillRemainingSpaceBelowTree(margin, availableWidth, availableHeight) {
+            // Calculate where the actual drawn rows end (up to maxTime rows)
+            const actualRowsDrawn = Math.min(tree.length, maxTime);
+            let lastRowY;
+            
+            if (actualRowsDrawn <= 0) {
+                lastRowY = margin; // No rows drawn, start from top
+            } else {
+                // Calculate the Y position where the last drawn row ends
+                let accumulatedHeight = 0;
+                for (let rowIndex = 0; rowIndex < actualRowsDrawn; rowIndex++) {
+                    accumulatedHeight += getRowHeight(rowIndex, availableHeight);
+                }
+                lastRowY = margin + accumulatedHeight;
+            }
 
-            // Copy buffer to main canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(bufferCanvas, 0, 0);
-
-
+            // Fill any remaining space below the tree rows
+            if (lastRowY < availableHeight) {
+                const remainingHeight = availableHeight - lastRowY;
+                
+                if (rowSortMode) {
+                    // When sort mode is enabled, draw left half one color, right half another color
+                    const halfWidth = availableWidth / 2;
+                    
+                    // Left half - first color
+                    bufferCtx.fillStyle = getBranchColor(0);
+                    bufferCtx.fillRect(margin, lastRowY, halfWidth, remainingHeight);
+                    
+                    // Right half - second color (or first color if only one branch)
+                    bufferCtx.fillStyle = getBranchColor(1 % branchRatios.length);
+                    bufferCtx.fillRect(margin + halfWidth, lastRowY, halfWidth, remainingHeight);
+                    
+                    // Add border between halves
+                    bufferCtx.fillStyle = '#000000';
+                    bufferCtx.fillRect(margin + halfWidth, lastRowY, 1, remainingHeight);
+                } else {
+                    // When sort mode is not enabled, use the original behavior
+                    bufferCtx.fillStyle = getBackgroundColor();
+                    bufferCtx.fillRect(margin, lastRowY, availableWidth, remainingHeight);
+                }
+            }
         }
 
         function redrawRowWithSorting(rowIndex, rowCells) {

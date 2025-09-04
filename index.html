@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Many Worlds Explorer</title>
     <script src="https://cdn.jsdelivr.net/npm/decimal.js@10.4.3/decimal.min.js"></script>
+    <img id="cursor-icon" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCAzMiA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIFdoaXRlIG91dGxpbmVzIGZvciB0aGUgbGluZXMgKGRyYXduIGZpcnN0LCBpbiBiYWNrZ3JvdW5kKSAtLT4KICA8bGluZSB4MT0iMTYiIHkxPSIyMSIgeDI9IjE2IiB5Mj0iMzIiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPGxpbmUgeDE9IjEwIiB5MT0iMjYiIHgyPSIyMiIgeTI9IjI2IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSIxMiIgeTE9IjM2IiB4Mj0iMTYiIHkyPSIzMiIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8bGluZSB4MT0iMjAiIHkxPSIzNiIgeDI9IjE2IiB5Mj0iMzIiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgCiAgPCEtLSBCbGFjayBzdGljayBmaWd1cmUgKGRyYXduIG9uIHRvcCwgaW4gZm9yZWdyb3VuZCkgLS0+CiAgPCEtLSBIZWFkIC0tPgogIDxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjUiIGZpbGw9ImJsYWNrIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDwhLS0gV2hpdGUgZG90IGluIGNlbnRlciBvZiBoZWFkIC0tPgogIDxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjEuNSIgZmlsbD0id2hpdGUiLz4KICA8IS0tIEJvZHktLT4KICA8bGluZSB4MT0iMTYiIHkxPSIyMSIgeDI9IjE2IiB5Mj0iMzIiIGZpbGw9ImJsYWNrIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSIxMCIgeTE9IjI2IiB4Mj0iMjIiIHkyPSIyNiIgZmlsbD0iYmxhY2siIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPGxpbmUgeDE9IjEyIiB5MT0iMzYiIHgyPSIxNiIgeTI9IjMyIiBmaWxsPSJibGFjayIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8bGluZSB4MT0iMjAiIHkxPSIzNiIgeDI9IjE2IiB5Mj0iMzIiIGZpbGw9ImJsYWNrIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K" style="display: none;" />
     <script>
         Decimal.set({
             precision: 1000,
@@ -340,8 +341,7 @@
         const foregroundCanvas = document.getElementById('foreground-canvas');
         const foregroundCtx = foregroundCanvas.getContext('2d');
 
-        const cursorIcon = new Image();
-        cursorIcon.src = 'you_symbol.svg';
+        const cursorIcon = document.getElementById('cursor-icon');
 
         const bufferCanvas = document.createElement('canvas');
         const bufferCtx = bufferCanvas.getContext('2d');

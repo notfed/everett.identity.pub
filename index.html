@@ -919,23 +919,8 @@
             // Sort the cells by branch index if sort mode is enabled
             const cellsToDraw = rowSortMode ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
 
-            // Check if at least half of the cells would be less than 2px
-            let smallCellCount = 0;
-            for (let cell of cellsToDraw) {
-                const cellWidth = cell.width * availableWidth;
-                if (cellWidth < 2) {
-                    smallCellCount++;
-                }
-            }
-            const hasSmallCells = smallCellCount >= cellsToDraw.length / 2;
-
-            if (hasSmallCells) {
-                // Use alternative drawing algorithm: 1px vertical lines
-                drawRowWithVerticalLines(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
-            } else {
-                // Use normal drawing algorithm
-                drawRowWithNormalCells(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
-            }
+            // Draw each cell individually, handling small cells with vertical lines
+            drawRowWithNormalCells(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
 
             // Draw walls more prominently on row 1 (rowIndex === 0)
             if (rowIndex === 0) {
@@ -984,11 +969,19 @@
                 const colorIndex = cell.branchIndex % colors.length;
                 bufferCtx.fillStyle = getBranchColor(colorIndex);
 
-                bufferCtx.fillRect(currentX, y, cellWidth, cellHeight);
-
-                // Add left border for all cells
-                bufferCtx.fillStyle = '#000000';
-                bufferCtx.fillRect(currentX, y, 1, cellHeight);
+                // Handle cells based on their size
+                if (cellWidth >= 2) {
+                    // Draw normal-sized cells as rectangles
+                    bufferCtx.fillRect(currentX, y, cellWidth, cellHeight);
+                    
+                    // Add left border for normal-sized cells
+                    bufferCtx.fillStyle = '#000000';
+                    bufferCtx.fillRect(currentX, y, 1, cellHeight);
+                } else if (cellWidth >= 1) {
+                    // For cells between 1-2px, limit to 1px and don't draw borders
+                    bufferCtx.fillRect(currentX, y, 1, cellHeight);
+                }
+                // Skip cells smaller than 1px completely
 
                 currentX += cellWidth;
             }
@@ -1571,23 +1564,8 @@
             // Sort the cells by branch index if sort mode is enabled
             const cellsToDraw = rowSortMode ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
 
-            // Check if at least 90% of the cells would be less than 2px
-            let smallCellCount = 0;
-            for (let cell of cellsToDraw) {
-                const cellWidth = cell.width * availableWidth;
-                if (cellWidth < 2) {
-                    smallCellCount++;
-                }
-            }
-            const hasSmallCells = smallCellCount >= cellsToDraw.length * 0.9;
-
-            if (hasSmallCells) {
-                // Use alternative drawing algorithm: 1px vertical lines
-                drawRowWithVerticalLines(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
-            } else {
-                // Use normal drawing algorithm
-                drawRowWithNormalCells(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
-            }
+            // Draw each cell individually, handling small cells with vertical lines
+            drawRowWithNormalCells(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
 
             // Draw walls more prominently on row 1 (rowIndex === 0)
             if (rowIndex === 0) {

@@ -1521,7 +1521,10 @@
             fillCanvasBackground(availableWidth, availableHeight);
 
             // Step 2: Draw the actual tree rows (up to 128 rows, but with heights based on maxTime)
-            drawTreeRows(margin, availableWidth, availableHeight);
+            for (let rowIndex = 0; rowIndex < Math.min(tree.length, maxTime); rowIndex++) {
+                const rowCells = tree[rowIndex];
+                drawSingleRow(rowIndex, rowCells, margin, availableWidth, availableHeight, rowSortMode);
+            }
 
             // Step 3: Copy buffer to main canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1548,14 +1551,6 @@
                 // When sort mode is not enabled, use the original behavior
                 bufferCtx.fillStyle = getBackgroundColor();
                 bufferCtx.fillRect(0, 0, availableWidth, availableHeight);
-            }
-        }
-
-        function drawTreeRows(margin, availableWidth, availableHeight) {
-            // Draw up to maxTime rows (the actual tree data we have)
-            for (let rowIndex = 0; rowIndex < Math.min(tree.length, maxTime); rowIndex++) {
-                const rowCells = tree[rowIndex];
-                drawSingleRow(rowIndex, rowCells, margin, availableWidth, availableHeight, rowSortMode);
             }
         }
 

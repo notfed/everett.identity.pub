@@ -12,7 +12,7 @@ See [http://mw.identity.pub/](http://mw.identity.pub/).
 
 The [many-worlds interpretation of quantum mechanics](https://en.wikipedia.org/wiki/Many-worlds_interpretation) says that the universe is deterministic: i.e., it obeys [the Schrödinger equation](https://en.wikipedia.org/wiki/Schr%C3%B6dinger_equation).
 
-So how do we end up with random numbers, e.g. with a [quantum coin flip](https://en.wikipedia.org/wiki/Quantum_coin_flipping)? Well, to put it simply, many-worlds says that this "randomness" is an illusion'. This tool is a simulation to help understand how the illusion happens.
+So how do we end up with random numbers, for example with [quantum coin flip](https://en.wikipedia.org/wiki/Quantum_coin_flipping)s? Well, to put it simply, many-worlds says that this "randomness" is an illusion'. This tool is a simulation to help understand how the illusion happens.
 
 The key takeaway is that, for almost every possible "you," the measured outcomes converge to 50% heads and 50% tails as you collect more samples. Try slowly dragging from the top to prove to yourself that it's actually counting correctly.
 

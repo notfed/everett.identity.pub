@@ -332,15 +332,12 @@ body, html {
       <div id="stats-container" class="stats-container" style="margin-left: 20px;">
         <h3>Branch ratio</h3>
         <div id="stats-branch-ratio-items"></div>
-        <h3>Your time</h3>
-        <div class="stats-cursor-time-container">
-          <div class="stats-cursor-time-item">
-            <div class="legend-color" style="background-color: transparent; border: none;">🕐</div>
-            <div id="stats-cursor-time">48</div>
-          </div>
-        </div>
         <h3>Your measurements</h3>
         <div id="stats-frequency-items">
+            <div class="stats-frequency-item">
+                <div class="legend-color" style="background-color: transparent; border: none;">🕐</div>
+                <span class="frequency-label">Total: <span id="stats-cursor-time">48</span></span>
+            </div>
             <div class="stats-frequency-item">
                 <div class="legend-color" style="background-color: oklch(0.7933 0.179 145.62);"></div><span
                     class="frequency-label">24 (50%)</span>
@@ -1248,7 +1245,13 @@ function updateStats() {
 // Update frequency display with raw branch counts and percentages
 function updateStatsFrequency(branches) {
     const frequencyItems = document.getElementById('stats-frequency-items');
+    
+    // Keep the time display (first item) and only update the frequency items
+    const timeItem = frequencyItems.firstElementChild;
     frequencyItems.innerHTML = '';
+    if (timeItem) {
+        frequencyItems.appendChild(timeItem);
+    }
     
     if (!branches || branches.length === 0) {
         return;

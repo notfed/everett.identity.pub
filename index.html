@@ -284,7 +284,16 @@ body, html {
         <h3>Branch ratios</h3>
         <div id="stats-branch-ratio-items"></div>
         <h3>Your Frequency</h3>
-        <div id="stats-frequency-items"></div>
+        <div id="stats-frequency-items">
+            <div class="stats-frequency-item">
+                <div class="legend-color" style="background-color: oklch(0.7933 0.179 145.62);"></div><span
+                    class="frequency-label">8 (47%)</span>
+                </div>
+            <div class="stats-frequency-item">
+            <div class="legend-color" style="background-color: oklch(0.6239 0.181 258.33);"></div><span
+                class="frequency-label">9 (53%)</span>
+            </div>
+        </div>
         <h3>Your Time</h3>
         <div style="color: white; font-family: Arial, sans-serif; font-size: 14px;">
           <span id="stats-cursor-time">17</span>
@@ -550,13 +559,258 @@ function init() {
     
     drawInitialLine();
     
+    // Draw explanatory text and arrows
+    drawExplanatoryElements();
+    
     updateSimulation();
 }
 
 function drawInitialLine() {
     mouseX = canvas.width * (2.0/3.0);
-    mouseY = canvas.height * (6.0/7.0);
+    mouseY = canvas.height * (3.0/4.0);
     drawMouseLineOnForeground();
+}
+
+// Draw explanatory text and arrows to help users understand the interface
+function drawExplanatoryElements() {
+    // Clear any existing explanatory elements
+    clearExplanatoryElements();
+    
+    // 1. "You are here" text with curved arrow pointing to the cursor
+    drawYouAreHere();
+    
+    // 2. "Your history" text with curved arrow pointing to the history line
+    drawYourHistory();
+    
+    // 3. "Your stats" text with curved arrow pointing to the stats container
+    drawYourStats();
+}
+
+// Draw "You are here" text with curved arrow pointing to the cursor
+function drawYouAreHere() {
+    const text = "You are here";
+    
+    // Draw curved arrow from text to cursor
+    foregroundCtx.save();
+    foregroundCtx.strokeStyle = '#000';
+    foregroundCtx.lineWidth = 3;
+    foregroundCtx.fillStyle = '#000';
+    foregroundCtx.font = 'bold 16px Arial';
+    foregroundCtx.textAlign = 'left';
+    
+    // Draw white background for text readability
+    const textMetrics = foregroundCtx.measureText(text);
+    const padding = 4;
+    foregroundCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    const foregroundCtxWidth = textMetrics.width + 2 * padding;
+    const foregroundCtxHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent + 2 * padding;
+
+    const textX = mouseX - foregroundCtxWidth/2;
+    const textY = mouseY + foregroundCtxHeight + 50;
+    const foregroundCtxX = textX - padding;
+    const foregroundCtxY = textY - textMetrics.actualBoundingBoxAscent - padding;
+    foregroundCtx.fillRect(
+        foregroundCtxX,
+        foregroundCtxY,
+        foregroundCtxWidth,
+        foregroundCtxHeight, 
+    );
+    
+    // Draw the text
+    foregroundCtx.fillStyle = '#000';
+    foregroundCtx.fillText(text, textX, textY);
+    
+    // Draw curved arrow
+    const arrowStartX = foregroundCtxX+foregroundCtxWidth/2 - 5;
+    const arrowStartY = foregroundCtxY - 5;
+    const arrowEndX = mouseX ;
+    const arrowEndY = mouseY+ 20;
+    const controlX = (arrowStartX + arrowEndX) / 2;
+    const controlY = arrowStartY + 5;
+    
+    foregroundCtx.beginPath();
+    foregroundCtx.moveTo(arrowStartX, arrowStartY);
+    foregroundCtx.quadraticCurveTo(controlX, controlY, arrowEndX, arrowEndY);
+    foregroundCtx.stroke();
+    
+    // Draw arrowhead
+    const angle = Math.atan2(arrowEndY - controlY, arrowEndX - controlX);
+    const arrowheadLength = 8;
+    const arrowheadAngle = Math.PI / 6;
+    
+    foregroundCtx.beginPath();
+    foregroundCtx.moveTo(arrowEndX, arrowEndY);
+    foregroundCtx.lineTo(
+        arrowEndX - arrowheadLength * Math.cos(angle - arrowheadAngle),
+        arrowEndY - arrowheadLength * Math.sin(angle - arrowheadAngle)
+    );
+    foregroundCtx.moveTo(arrowEndX, arrowEndY);
+    foregroundCtx.lineTo(
+        arrowEndX - arrowheadLength * Math.cos(angle + arrowheadAngle),
+        arrowEndY - arrowheadLength * Math.sin(angle + arrowheadAngle)
+    );
+    foregroundCtx.stroke();
+    
+    foregroundCtx.restore();
+}
+
+// Draw "Your history" text with curved arrow pointing to the history line
+function drawYourHistory() {
+    const text = "Your history";
+    const textX = mouseX - 20;
+    const textY = mouseY - 40;
+    
+    foregroundCtx.save();
+    foregroundCtx.strokeStyle = '#000';
+    foregroundCtx.lineWidth = 3;
+    foregroundCtx.fillStyle = '#000';
+    foregroundCtx.font = 'bold 16px Arial';
+    foregroundCtx.textAlign = 'right';
+    
+    // Draw white background for text readability
+    const textMetrics = foregroundCtx.measureText(text);
+    const padding = 4;
+    foregroundCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    const foregroundCtxX = textX - textMetrics.width - padding;
+    const foregroundCtxY = textY - textMetrics.actualBoundingBoxAscent - padding;
+    const foregroundCtxWidth = textMetrics.width + 2 * padding;
+    const foregroundCtxHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent + 2 * padding;
+    foregroundCtx.fillRect(
+        foregroundCtxX,
+        foregroundCtxY,
+        foregroundCtxWidth,
+        foregroundCtxHeight,
+    );
+    // Draw the text
+    foregroundCtx.fillStyle = '#000';
+    foregroundCtx.fillText(text, textX, textY);
+    
+    // Draw curved arrow pointing upward along the history line
+    const arrowStartX = foregroundCtxX+foregroundCtxWidth*0.75;
+    const arrowStartY = textY - 20;
+    const arrowEndX = mouseX;
+    const arrowEndY = mouseY - 130;
+    const controlX = (arrowStartX + arrowEndX) / 2;
+    const controlY = (arrowStartY + arrowEndY) / 2 + 25;
+    
+    foregroundCtx.beginPath();
+    foregroundCtx.moveTo(arrowStartX, arrowStartY);
+    foregroundCtx.quadraticCurveTo(controlX, controlY, arrowEndX, arrowEndY);
+    foregroundCtx.stroke();
+    
+    // Draw arrowhead pointing upward
+    const angle = Math.atan2(arrowEndY - controlY, arrowEndX - controlX);
+    const arrowheadLength = 8;
+    const arrowheadAngle = Math.PI / 6;
+    
+    foregroundCtx.beginPath();
+    foregroundCtx.moveTo(arrowEndX, arrowEndY);
+    foregroundCtx.lineTo(
+        arrowEndX - arrowheadLength * Math.cos(angle - arrowheadAngle),
+        arrowEndY - arrowheadLength * Math.sin(angle - arrowheadAngle)
+    );
+    foregroundCtx.moveTo(arrowEndX, arrowEndY);
+    foregroundCtx.lineTo(
+        arrowEndX - arrowheadLength * Math.cos(angle + arrowheadAngle),
+        arrowEndY - arrowheadLength * Math.sin(angle + arrowheadAngle)
+    );
+    foregroundCtx.stroke();
+    
+    foregroundCtx.restore();
+}
+
+// Draw "Your stats" text with curved arrow pointing to the stats container
+function drawYourStats() {
+    const text = "Your stats";
+    const statsContainer = document.getElementById('stats-container');
+    const rect = statsContainer.getBoundingClientRect();
+    
+    // Convert DOM coordinates to canvas coordinates
+    const canvasRect = canvas.getBoundingClientRect();
+    const textX = (rect.left - canvasRect.left + rect.width ) * (canvas.width / canvasRect.width);
+    const textY = (rect.top - canvasRect.top - 20) * (canvas.height / canvasRect.height) - 10;
+    
+    foregroundCtx.save();
+    foregroundCtx.strokeStyle = '#000';
+    foregroundCtx.lineWidth = 3;
+    foregroundCtx.fillStyle = '#000';
+    foregroundCtx.font = 'bold 16px Arial';
+    foregroundCtx.textAlign = 'center';
+    
+    // Draw white background for text readability
+    const textMetrics = foregroundCtx.measureText(text);
+    const padding = 4;
+    foregroundCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    foregroundCtx.fillRect(
+        textX - textMetrics.width / 2 - padding, 
+        textY - textMetrics.actualBoundingBoxAscent - padding, 
+        textMetrics.width + 2 * padding, 
+        textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent + 2 * padding
+    );
+    
+    // Draw the text
+    foregroundCtx.fillStyle = '#000';
+    foregroundCtx.fillText(text, textX, textY);
+    
+    // Draw curved arrow pointing to the stats container
+    const arrowStartX = textX;
+    const arrowStartY = textY + 5;
+    const arrowEndX = textX;
+    const arrowEndY = textY + 25;
+    const controlX = textX + 20;
+    const controlY = (arrowStartY + arrowEndY) / 2;
+    
+    foregroundCtx.beginPath();
+    foregroundCtx.moveTo(arrowStartX, arrowStartY);
+    foregroundCtx.quadraticCurveTo(controlX, controlY, arrowEndX, arrowEndY);
+    foregroundCtx.stroke();
+    
+    // Draw arrowhead pointing downward
+    const angle = Math.atan2(arrowEndY - controlY, arrowEndX - controlX);
+    const arrowheadLength = 8;
+    const arrowheadAngle = Math.PI / 6;
+    
+    foregroundCtx.beginPath();
+    foregroundCtx.moveTo(arrowEndX, arrowEndY);
+    foregroundCtx.lineTo(
+        arrowEndX - arrowheadLength * Math.cos(angle - arrowheadAngle),
+        arrowEndY - arrowheadLength * Math.sin(angle - arrowheadAngle)
+    );
+    foregroundCtx.moveTo(arrowEndX, arrowEndY);
+    foregroundCtx.lineTo(
+        arrowEndX - arrowheadLength * Math.cos(angle + arrowheadAngle),
+        arrowEndY - arrowheadLength * Math.sin(angle + arrowheadAngle)
+    );
+    foregroundCtx.stroke();
+    
+    foregroundCtx.restore();
+}
+
+// Clear explanatory elements from the main canvas
+function clearExplanatoryElements() {
+    // We'll redraw the entire simulation to clear these elements
+    // This is handled by the existing redraw mechanisms
+}
+
+// Draw background rectangle for remaining area after rows
+function drawBackgroundRectangle(margin, availableWidth, availableHeight) {
+    // Calculate where the last row ends
+    let lastRowY;
+    if (128 < COMPRESSED_ROWS_START) {
+        // All rows are normal
+        lastRowY = margin + 128 * getRowHeight(127, availableHeight);
+    } else {
+        // Some rows are compressed
+        const normalRowsHeight = COMPRESSED_ROWS_START * getRowHeight(0, availableHeight);
+        const compressedRowsHeight = (128 - COMPRESSED_ROWS_START) * getRowHeight(COMPRESSED_ROWS_START, availableHeight);
+        lastRowY = margin + normalRowsHeight + compressedRowsHeight;
+    }
+    
+    // Draw background for any remaining space
+    if (lastRowY < availableHeight) {
+        bufferCtx.fillStyle = getBackgroundColor();
+        bufferCtx.fillRect(margin, lastRowY, availableWidth, availableHeight - lastRowY);
+    }
 }
 
 // Update simulation based on current input values
@@ -615,6 +869,7 @@ async function updateSimulation() {
     }
     
 
+
 }
 
 // Draw the complete simulation asynchronously
@@ -643,6 +898,8 @@ async function drawSimulationAsync() {
     
     // Start asynchronous tree generation and drawing
     await generateTreeAsync(totalWeight, margin, availableWidth, availableHeight);
+    
+
 }
 
 // Generate tree and draw asynchronously
@@ -797,6 +1054,8 @@ function drawRow(rowIndex, rowCells, margin, availableWidth, availableHeight) {
     
     // Update progress tracking
     rowsCompleted = Math.max(rowsCompleted, rowIndex + 1);
+    
+
 }
 
 // Draw gray rows for remaining rows after timeout
@@ -1199,12 +1458,12 @@ function drawMouseLineOnForeground() {
     // Clear previous line
     clearForegroundCanvas();
     
-            // Always draw the mouse line if mouse coordinates are available
-        if (mouseX !== null && mouseY !== null) {
-            const margin = 0;
-            const availableWidth = canvas.width - 2 * margin;
-            const availableHeight = canvas.height - 2 * margin;
-        
+    // Always draw the mouse line if mouse coordinates are available
+    if (mouseX !== null && mouseY !== null) {
+        const margin = 0;
+        const availableWidth = canvas.width - 2 * margin;
+        const availableHeight = canvas.height - 2 * margin;
+    
         // Always draw the mouse line regardless of position
         drawMouseLine(margin, availableWidth, availableHeight);
         
@@ -1213,6 +1472,8 @@ function drawMouseLineOnForeground() {
             mouseY >= margin && mouseY <= margin + availableHeight) {
             calculateAndUpdateStats(availableWidth);
         }
+        
+
     }
 }
 
@@ -1420,6 +1681,8 @@ function redrawAllRowsSorted() {
     // Copy buffer to main canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(bufferCanvas, 0, 0);
+    
+
 }
 
 // Apply sort mode to the current tree

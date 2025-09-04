@@ -1022,26 +1022,25 @@ function drawRow(rowIndex, rowCells, margin, availableWidth, availableHeight) {
     const y = margin + rowIndex * rowHeight;
     const cellHeight = rowHeight - 1; // 1px gap between rows
     
-    // Draw cells based on tree structure
-    let currentX = margin;
-    
     // If sort mode is enabled, sort the cells by branch index before drawing
     const cellsToDraw = rowSortMode ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
     
+    // Check if at least half of the cells would be less than 2px
+    let smallCellCount = 0;
     for (let cell of cellsToDraw) {
         const cellWidth = cell.width * availableWidth;
-        
-        // Determine color based on cell's branch path
-        const colorIndex = cell.branchIndex % colors.length;
-        bufferCtx.fillStyle = getBranchColor(colorIndex);
-        
-        bufferCtx.fillRect(currentX, y, cellWidth, cellHeight);
-        
-        // Add left border for all cells
-        bufferCtx.fillStyle = '#000000';
-        bufferCtx.fillRect(currentX, y, 1, cellHeight);
-        
-        currentX += cellWidth;
+        if (cellWidth < 2) {
+            smallCellCount++;
+        }
+    }
+    const hasSmallCells = smallCellCount >= cellsToDraw.length / 2;
+    
+    if (hasSmallCells) {
+        // Use alternative drawing algorithm: 1px vertical lines
+        drawRowWithVerticalLines(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
+    } else {
+        // Use normal drawing algorithm
+        drawRowWithNormalCells(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
     }
     
     // Draw walls more prominently on row 1 (rowIndex === 0)
@@ -1079,6 +1078,49 @@ function drawRow(rowIndex, rowCells, margin, availableWidth, availableHeight) {
     rowsCompleted = Math.max(rowsCompleted, rowIndex + 1);
     
 
+}
+
+// Draw row using normal cell-based algorithm
+function drawRowWithNormalCells(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight) {
+    let currentX = margin;
+    
+    for (let cell of cellsToDraw) {
+        const cellWidth = cell.width * availableWidth;
+        
+        // Determine color based on cell's branch path
+        const colorIndex = cell.branchIndex % colors.length;
+        bufferCtx.fillStyle = getBranchColor(colorIndex);
+        
+        bufferCtx.fillRect(currentX, y, cellWidth, cellHeight);
+        
+        // Add left border for all cells
+        bufferCtx.fillStyle = '#000000';
+        bufferCtx.fillRect(currentX, y, 1, cellHeight);
+        
+        currentX += cellWidth;
+    }
+}
+
+// Draw row using 1px vertical lines when cells are too small
+function drawRowWithVerticalLines(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight) {
+    // Fill the entire row from left to right with 1px vertical lines
+    // Colors rotate through the branch colors (only the first b colors where b = branchRatios.length)
+    let currentX = margin;
+    let colorIndex = 0;
+    const numBranchColors = branchRatios.length;
+    
+    while (currentX < margin + availableWidth) {
+        // Get color for current line (only use first numBranchColors colors)
+        const color = getBranchColor(colorIndex);
+        bufferCtx.fillStyle = color;
+        
+        // Draw 1px vertical line
+        bufferCtx.fillRect(currentX, y, 1, cellHeight);
+        
+        // Move to next pixel and rotate color
+        currentX += 1;
+        colorIndex = (colorIndex + 1) % numBranchColors;
+    }
 }
 
 // Draw gray rows for remaining rows after timeout
@@ -1656,19 +1698,22 @@ function redrawAllRowsSorted() {
         // If sort mode is enabled, sort the cells by branch index before drawing
         const cellsToDraw = rowSortMode ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
         
-        let currentX = margin;
+        // Check if at least 90% of the cells would be less than 2px
+        let smallCellCount = 0;
         for (let cell of cellsToDraw) {
             const cellWidth = cell.width * availableWidth;
-            const colorIndex = cell.branchIndex % colors.length;
-            
-            bufferCtx.fillStyle = getBranchColor(colorIndex);
-            bufferCtx.fillRect(currentX, y, cellWidth, cellHeight);
-            
-            // Add left border for all cells
-            bufferCtx.fillStyle = '#000000';
-            bufferCtx.fillRect(currentX, y, 1, cellHeight);
-            
-            currentX += cellWidth;
+            if (cellWidth < 2) {
+                smallCellCount++;
+            }
+        }
+        const hasSmallCells = smallCellCount >= cellsToDraw.length * 0.9;
+        
+        if (hasSmallCells) {
+            // Use alternative drawing algorithm: 1px vertical lines
+            drawRowWithVerticalLines(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
+        } else {
+            // Use normal drawing algorithm
+            drawRowWithNormalCells(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
         }
         
         // Draw walls more prominently on row 1 (rowIndex === 0)
@@ -1763,20 +1808,22 @@ function redrawRowWithSorting(rowIndex, rowCells) {
     bufferCtx.fillStyle = getBackgroundColor();
     bufferCtx.fillRect(margin, y, availableWidth, cellHeight);
     
-    // Draw sorted cells with left border
-    let currentX = margin;
+    // Check if at least 90% of the cells would be less than 2px
+    let smallCellCount = 0;
     for (let cell of rowCells) {
         const cellWidth = cell.width * availableWidth;
-        const colorIndex = cell.branchIndex % colors.length;
-        
-        bufferCtx.fillStyle = getBranchColor(colorIndex);
-        bufferCtx.fillRect(currentX, y, cellWidth, cellHeight);
-        
-                    // Add left border for all cells
-            bufferCtx.fillStyle = '#000000';
-            bufferCtx.fillRect(currentX, y, 1, cellHeight);
-        
-        currentX += cellWidth;
+        if (cellWidth < 2) {
+            smallCellCount++;
+        }
+    }
+    const hasSmallCells = smallCellCount >= rowCells.length * 0.9;
+    
+    if (hasSmallCells) {
+        // Use alternative drawing algorithm: 1px vertical lines
+        drawRowWithVerticalLines(rowIndex, rowCells, margin, availableWidth, availableHeight, y, cellHeight);
+    } else {
+        // Use normal drawing algorithm
+        drawRowWithNormalCells(rowIndex, rowCells, margin, availableWidth, availableHeight, y, cellHeight);
     }
     
     // Draw horizontal line underneath the previous row
@@ -2037,6 +2084,38 @@ function testDecimalPrecision() {
     }
     console.log('After 100 divisions by 2:', x.toString());
     console.log('Number of decimal places:', x.dp());
+}
+
+// Test function for small cell width detection
+function testSmallCellWidthDetection() {
+    console.log('Testing small cell width detection...');
+    
+    // Create test cells with very small widths
+    const testCells = [
+        { width: 0.001, branchIndex: 0 }, // Very small cell
+        { width: 0.002, branchIndex: 1 }, // Very small cell
+        { width: 0.5, branchIndex: 2 }    // Normal cell
+    ];
+    
+    const availableWidth = 1000; // Simulate 1000px width
+    
+    // Test the detection logic (at least 90% must be small)
+    let smallCellCount = 0;
+    for (let cell of testCells) {
+        const cellWidth = cell.width * availableWidth;
+        console.log(`Cell width: ${cellWidth}px (${cell.width} * ${availableWidth})`);
+        if (cellWidth < 2) {
+            smallCellCount++;
+            console.log('Small cell detected!');
+        }
+    }
+    
+    const hasSmallCells = smallCellCount >= testCells.length * 0.9;
+    console.log(`Small cells: ${smallCellCount}/${testCells.length}`);
+    console.log('Has small cells (>=90%):', hasSmallCells);
+    console.log('Should use vertical lines:', hasSmallCells);
+    
+    return hasSmallCells;
 }
 </script>
 

@@ -729,8 +729,28 @@
 
             // Draw background for any remaining space
             if (lastRowY < availableHeight) {
-                bufferCtx.fillStyle = getBackgroundColor();
-                bufferCtx.fillRect(margin, lastRowY, availableWidth, availableHeight - lastRowY);
+                const remainingHeight = availableHeight - lastRowY;
+                
+                if (rowSortMode) {
+                    // When sort mode is enabled, draw left half one color, right half another color
+                    const halfWidth = availableWidth / 2;
+                    
+                    // Left half - first color
+                    bufferCtx.fillStyle = getBranchColor(0);
+                    bufferCtx.fillRect(margin, lastRowY, halfWidth, remainingHeight);
+                    
+                    // Right half - second color (or first color if only one branch)
+                    bufferCtx.fillStyle = getBranchColor(1 % branchRatios.length);
+                    bufferCtx.fillRect(margin + halfWidth, lastRowY, halfWidth, remainingHeight);
+                    
+                    // Add border between halves
+                    bufferCtx.fillStyle = '#000000';
+                    bufferCtx.fillRect(margin + halfWidth, lastRowY, 1, remainingHeight);
+                } else {
+                    // When sort mode is not enabled, use the original behavior
+                    bufferCtx.fillStyle = getBackgroundColor();
+                    bufferCtx.fillRect(margin, lastRowY, availableWidth, remainingHeight);
+                }
             }
         }
 
@@ -797,8 +817,26 @@
             simulationCancelled = false;
 
             // Clear buffer canvas
-            bufferCtx.fillStyle = getBackgroundColor();
-            bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+            if (rowSortMode) {
+                // When sort mode is enabled, draw left half one color, right half another color
+                const halfWidth = bufferCanvas.width / 2;
+                
+                // Left half - first color
+                bufferCtx.fillStyle = getBranchColor(0);
+                bufferCtx.fillRect(0, 0, halfWidth, bufferCanvas.height);
+                
+                // Right half - second color (or first color if only one branch)
+                bufferCtx.fillStyle = getBranchColor(1 % branchRatios.length);
+                bufferCtx.fillRect(halfWidth, 0, halfWidth, bufferCanvas.height);
+                
+                // Add border between halves
+                bufferCtx.fillStyle = '#000000';
+                bufferCtx.fillRect(halfWidth, 0, 1, bufferCanvas.height);
+            } else {
+                // When sort mode is not enabled, use the original behavior
+                bufferCtx.fillStyle = getBackgroundColor();
+                bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+            }
 
             const margin = 0;
             const availableWidth = bufferCanvas.width - 2 * margin;
@@ -1523,8 +1561,26 @@
             if (!tree || tree.length === 0) return;
 
             // Clear the entire canvas first
-            bufferCtx.fillStyle = getBackgroundColor();
-            bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+            if (rowSortMode) {
+                // When sort mode is enabled, draw left half one color, right half another color
+                const halfWidth = bufferCanvas.width / 2;
+                
+                // Left half - first color
+                bufferCtx.fillStyle = getBranchColor(0);
+                bufferCtx.fillRect(0, 0, halfWidth, bufferCanvas.height);
+                
+                // Right half - second color (or first color if only one branch)
+                bufferCtx.fillStyle = getBranchColor(1 % branchRatios.length);
+                bufferCtx.fillRect(halfWidth, 0, halfWidth, bufferCanvas.height);
+                
+                // Add border between halves
+                bufferCtx.fillStyle = '#000000';
+                bufferCtx.fillRect(halfWidth, 0, 1, bufferCanvas.height);
+            } else {
+                // When sort mode is not enabled, use the original behavior
+                bufferCtx.fillStyle = getBackgroundColor();
+                bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+            }
 
             const margin = 0;
             const availableWidth = bufferCanvas.width - 2 * margin;

@@ -262,69 +262,12 @@ body, html {
     color: white;
 }
 
-.stats-cursor-time-item {
-    display: flex;
-    align-items: center;
-}
-
-.stats-cursor-time-item .legend-color {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-}
-
 #stats-cursor-time {
     font-family: Arial, sans-serif;
     font-size: 12px;
     color: white;
 }
 
-.stats-cursor-time-container {
-    display: flex;
-    align-items: center;
-    min-height: 1.5em; /* Reduce height */
-    margin-top: -0.5em; /* Reduce space from h3 above */
-}
-
-.help-container {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 20px 30px;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    font-size: clamp(12px, 2.5vw, 16px);
-    line-height: 1.5;
-    text-align: center;
-    z-index: 1000;
-    pointer-events: none;
-    width: clamp(400px, 60vw, 800px);
-    max-width: 90vw;
-    max-height: 90vh;
-    overflow: auto;
-    box-sizing: border-box;
-}
-
-@media (max-width: 480px) {
-    .help-container {
-        padding: 15px 20px;
-        width: 95vw;
-        max-width: 95vw;
-        max-height: 95vh;
-    }
-}
-
-@media (max-width: 320px) {
-    .help-container {
-        padding: 10px 15px;
-        width: 98vw;
-        max-width: 98vw;
-        max-height: 98vh;
-    }
-}
 </style>
 </head>
 <body>
@@ -362,28 +305,6 @@ body, html {
   
 
   
-  <div class="help-container" id="help-container" style="display: none">
-    <h1>Welcome to the Everett multiverse.</h1>
-    <h2>Motivation</h2>
-    <ul style="text-align:left;">
-      <li>While in the Everett interpretation of quantum mechanics the universe evolves deterministically (according to the <a href="https://en.wikipedia.org/wiki/Schr%C3%B6dinger_equation"></a>Schrödinger equation</a>), observers see quantum randomness anyway.</li>
-      <li>This is a visual aid to help understand how this occurs.</li>
-      <li>You see, despite the multiverse as a whole being deterministic, if an observer performs a sequence of quantum coin flips, then, after each coin flip, the world branches (think "green=heads, tails=blue") into different observers who see different results, and, after a large number of coin flips, almost all observers will appear to have witnessed a sequence of random results unfold before their eyes. Again, this happens despite the multiverse being deterministic.</li>
-    </ul>
-
-    <h2>What am I looking at?</h2>
-    <ul style="text-align:left;">
-      <li>Each cell is a world.</li>
-      <li>Each world branches (i.e., divides) into the worlds immediately below it, proportional to the supplied "<u>Branch ratios</u>".</li>
-      <li>You are `𖨆`. (Your cursor.)</li>
-      <li>The vertical line is your history: i.e., the sequence of branches (and their corresponding colors) you have encountered.</li>
-      <li>"<u>Time</u>" is the height of the visualization: it's how many branches "you" have encountered.</li>
-      <li>The "Frequency" counts how many times each color branch was encountered in your history.</li> 
-      <li>Tip: press "up" and "down" to adjust the time.</li>
-      <li>Tip: move the mouse horizontally to adjust where "you" are, vertically to adjust the time.</li>
-      <li>Tip: drag the red walls in row 1 to adjust branch ratios in real-time.</li>
-    </ul>
-  </div>
   <div class="canvas-container">
     <canvas id="canvas"></canvas>
     <canvas id="foreground-canvas"></canvas>
@@ -396,8 +317,6 @@ const MIN_MAX_TIME = 1; // Minimum allowed maxTime value
 const MAX_MAX_TIME = 256; // Maximum allowed maxTime value
 const COMPRESSED_ROWS_START = 20; // Row where compression begins
 const TOTAL_ROWS = 128; // Total rows to show (10 normal + 118 compressed)
-const MOUSE_SYMBOL_Y_OFFSET = 96; // X offset for mouse symbol positioning
-const HELP_POPUP_PROTECTION_DELAY = 500; // Delay before help popup can be dismissed (ms)
 const EXPLANATORY_TEXT_FONT = 'bold 14pt "Segoe UI", sans-serif'; // Font for explanatory text elements
 let branchRatios = [0.5, 0.5]; // Updated via input - normalized and rounded to 0.05 increments
 let maxTime = 30; // Updated via input
@@ -416,7 +335,6 @@ let rowsCompleted = 0; // Track how many rows have been completed
 let rowSortMode = false; // Track whether "row sort" mode is enabled
 let originalTree = null; // Store the original unsorted tree structure
 let cursorTime = 48; // Current time based on cursor Y position
-let pageInitTime = null; // Track when page was initialized
 
 // Canvas setup
 const canvas = document.getElementById('canvas');
@@ -462,16 +380,6 @@ const colors = [
 
 ];
 
-// Shuffle the colors array randomly
-function shuffleColors() {
-    for (let i = colors.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [colors[i], colors[j]] = [colors[j], colors[i]];
-    }
-}
-
-// Shuffle colors on initialization
-// shuffleColors();
 
 // Background color for canvas and gray rows
 function getBackgroundColor() {
@@ -595,20 +503,11 @@ function clearCurrentTimeout() {
     }
 }
 
-// Check if 500ms has passed since page initialization
-function isPageInitDelayPassed() {
-    if (pageInitTime === null) {
-        return false;
-    }
-    return (Date.now() - pageInitTime) >= 500;
-}
 
 
 
 // Initialize simulation
 function init() {
-    // Set page initialization time
-    pageInitTime = Date.now();
     console.log("init");
     
     // Initialize input values from global variables
@@ -1293,11 +1192,6 @@ function updateStatsFrequency(branches) {
 
 // Handle mouse movement anywhere on the page
 function handleMouseMove(event) {
-    // Ignore mouse/touch events until 500ms after page initialization
-    if (!isPageInitDelayPassed()) {
-        return;
-    }
-    
     // Get canvas-relative coordinates for drawing
     const rect = canvas.getBoundingClientRect();
     
@@ -1384,11 +1278,6 @@ function handleMouseLeave() {
 
 // Handle mouse button down - start dragging
 function handleMouseDown(event) {
-    // Ignore mouse/touch events until 500ms after page initialization
-    if (!isPageInitDelayPassed()) {
-        return;
-    }
-    
     // Handle both mouse and touch events
     if (event.button === 0 || event.type === 'touchstart') { // Left mouse button or touch
         // For touch events, update coordinates immediately before starting drag
@@ -1434,11 +1323,6 @@ function handleMouseDown(event) {
 
 // Handle mouse button up - stop dragging
 function handleMouseUp(event) {
-    // Ignore mouse/touch events until 500ms after page initialization
-    if (!isPageInitDelayPassed()) {
-        return;
-    }
-    
     // Handle both mouse and touch events
     if (event.button === 0 || event.type === 'touchend') { // Left mouse button or touch
         if (isDraggingWall) {
@@ -1765,37 +1649,6 @@ function redrawAllRowsSorted() {
 
 }
 
-// Apply sort mode to the current tree
-async function applySortMode() {
-    if (!tree || tree.length === 0) return;
-    
-    // Create a copy of the tree for sorting
-    const sortedTree = [];
-    
-    for (let rowIndex = 0; rowIndex < tree.length; rowIndex++) {
-        // Check if simulation was cancelled or sort mode disabled
-        if (simulationCancelled || !rowSortMode) {
-            return;
-        }
-        
-        const originalRow = tree[rowIndex];
-        const sortedRow = [...originalRow].sort((a, b) => a.branchIndex - b.branchIndex);
-        
-        // Add animation delay for each row
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Check again after delay
-        if (simulationCancelled || !rowSortMode) {
-            return;
-        }
-        
-        // Update the tree with sorted row
-        tree[rowIndex] = sortedRow;
-        
-        // Redraw the row with sorting animation
-        redrawRowWithSorting(rowIndex, sortedRow);
-    }
-}
 
 
 
@@ -2072,66 +1925,6 @@ function runUnitTests() {
     console.log('Done running unit tests...');
 }
 
-// Test function for background color mixing
-function testBackgroundColor() {
-    console.log('Testing background color mixing...');
-    console.log('Current weights:', branchRatios);
-    console.log('Current colors:', colors);
-    console.log('Background color result:', getBackgroundColor());
-}
-
-// Test function for Decimal.js precision
-function testDecimalPrecision() {
-    console.log('Testing Decimal.js precision...');
-    console.log('Decimal.js config:', Decimal.config());
-    
-    // Test high precision calculation
-    const a = Decimal(1).dividedBy(3);
-    const b = a.times(3);
-    console.log('1/3 =', a.toString());
-    console.log('(1/3) * 3 =', b.toString());
-    console.log('Precision loss?', !b.equals(1));
-    
-    // Test convergence scenario
-    let x = Decimal(1);
-    for (let i = 0; i < 100; i++) {
-        x = x.dividedBy(2);
-    }
-    console.log('After 100 divisions by 2:', x.toString());
-    console.log('Number of decimal places:', x.dp());
-}
-
-// Test function for small cell width detection
-function testSmallCellWidthDetection() {
-    console.log('Testing small cell width detection...');
-    
-    // Create test cells with very small widths
-    const testCells = [
-        { width: 0.001, branchIndex: 0 }, // Very small cell
-        { width: 0.002, branchIndex: 1 }, // Very small cell
-        { width: 0.5, branchIndex: 2 }    // Normal cell
-    ];
-    
-    const availableWidth = 1000; // Simulate 1000px width
-    
-    // Test the detection logic (at least 90% must be small)
-    let smallCellCount = 0;
-    for (let cell of testCells) {
-        const cellWidth = cell.width * availableWidth;
-        console.log(`Cell width: ${cellWidth}px (${cell.width} * ${availableWidth})`);
-        if (cellWidth < 2) {
-            smallCellCount++;
-            console.log('Small cell detected!');
-        }
-    }
-    
-    const hasSmallCells = smallCellCount >= testCells.length * 0.9;
-    console.log(`Small cells: ${smallCellCount}/${testCells.length}`);
-    console.log('Has small cells (>=90%):', hasSmallCells);
-    console.log('Should use vertical lines:', hasSmallCells);
-    
-    return hasSmallCells;
-}
 </script>
 
 </body>

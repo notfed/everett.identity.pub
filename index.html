@@ -779,20 +779,23 @@
 
             // Clear buffer canvas
             if (rowSortMode) {
-                // When sort mode is enabled, draw left half one color, right half another color
-                const halfWidth = bufferCanvas.width / 2;
+                // When sort mode is enabled, draw branches proportionally by their weights
+                const totalWeight = branchRatios.reduce((sum, weight) => sum + weight, 0);
+                let currentX = 0;
                 
-                // Left half - first color
-                bufferCtx.fillStyle = getBranchColor(0);
-                bufferCtx.fillRect(0, 0, halfWidth, bufferCanvas.height);
-                
-                // Right half - second color (or first color if only one branch)
-                bufferCtx.fillStyle = getBranchColor(1 % branchRatios.length);
-                bufferCtx.fillRect(halfWidth, 0, halfWidth, bufferCanvas.height);
-                
-                // Add border between halves
-                bufferCtx.fillStyle = '#000000';
-                bufferCtx.fillRect(halfWidth, 0, 1, bufferCanvas.height);
+                for (let i = 0; i < branchRatios.length; i++) {
+                    const branchWidth = (branchRatios[i] / totalWeight) * bufferCanvas.width;
+                    bufferCtx.fillStyle = getBranchColor(i);
+                    bufferCtx.fillRect(currentX, 0, branchWidth, bufferCanvas.height);
+                    
+                    // Add border between branches (except for the last one)
+                    if (i < branchRatios.length - 1) {
+                        bufferCtx.fillStyle = '#000000';
+                        bufferCtx.fillRect(currentX + branchWidth, 0, 1, bufferCanvas.height);
+                    }
+                    
+                    currentX += branchWidth;
+                }
             } else {
                 // When sort mode is not enabled, use the original behavior
                 bufferCtx.fillStyle = getBackgroundColor();
@@ -913,7 +916,7 @@
             const y = margin + rowIndex * rowHeight;
             const cellHeight = rowHeight - 1; // 1px gap between rows
 
-            // If sort mode is enabled, sort the cells by branch index before drawing
+            // Sort the cells by branch index if sort mode is enabled
             const cellsToDraw = rowSortMode ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
 
             // Check if at least half of the cells would be less than 2px
@@ -993,20 +996,23 @@
 
         function drawRowWithVerticalLines(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight) {
             if (rowSortMode) {
-                // When sort mode is enabled, draw left half one color, right half another color
-                const halfWidth = availableWidth / 2;
+                // When sort mode is enabled, draw branches proportionally by their weights
+                const totalWeight = branchRatios.reduce((sum, weight) => sum + weight, 0);
+                let currentX = margin;
                 
-                // Left half - first color
-                bufferCtx.fillStyle = getBranchColor(0);
-                bufferCtx.fillRect(margin, y, halfWidth, cellHeight);
-                
-                // Right half - second color (or first color if only one branch)
-                bufferCtx.fillStyle = getBranchColor(1 % branchRatios.length);
-                bufferCtx.fillRect(margin + halfWidth, y, halfWidth, cellHeight);
-                
-                // Add border between halves
-                bufferCtx.fillStyle = '#000000';
-                bufferCtx.fillRect(margin + halfWidth, y, 1, cellHeight);
+                for (let i = 0; i < branchRatios.length; i++) {
+                    const branchWidth = (branchRatios[i] / totalWeight) * availableWidth;
+                    bufferCtx.fillStyle = getBranchColor(i);
+                    bufferCtx.fillRect(currentX, y, branchWidth, cellHeight);
+                    
+                    // Add border between branches (except for the last one)
+                    if (i < branchRatios.length - 1) {
+                        bufferCtx.fillStyle = '#000000';
+                        bufferCtx.fillRect(currentX + branchWidth, y, 1, cellHeight);
+                    }
+                    
+                    currentX += branchWidth;
+                }
             } else {
                 // When sort mode is not enabled, use the original pixel-by-pixel cycling behavior
                 let currentX = margin;
@@ -1523,7 +1529,7 @@
             // Step 2: Draw the actual tree rows (up to 128 rows, but with heights based on maxTime)
             for (let rowIndex = 0; rowIndex < Math.min(tree.length, maxTime); rowIndex++) {
                 const rowCells = tree[rowIndex];
-                drawSingleRow(rowIndex, rowCells, margin, availableWidth, availableHeight, rowSortMode);
+                drawSingleRow(rowIndex, rowCells, margin, availableWidth, availableHeight);
             }
 
             // Step 3: Copy buffer to main canvas
@@ -1533,20 +1539,23 @@
 
         function fillCanvasBackground(availableWidth, availableHeight) {
             if (rowSortMode) {
-                // When sort mode is enabled, draw left half one color, right half another color
-                const halfWidth = availableWidth / 2;
+                // When sort mode is enabled, draw branches proportionally by their weights
+                const totalWeight = branchRatios.reduce((sum, weight) => sum + weight, 0);
+                let currentX = 0;
                 
-                // Left half - first color
-                bufferCtx.fillStyle = getBranchColor(0);
-                bufferCtx.fillRect(0, 0, halfWidth, availableHeight);
-                
-                // Right half - second color (or first color if only one branch)
-                bufferCtx.fillStyle = getBranchColor(1 % branchRatios.length);
-                bufferCtx.fillRect(halfWidth, 0, halfWidth, availableHeight);
-                
-                // Add border between halves
-                bufferCtx.fillStyle = '#000000';
-                bufferCtx.fillRect(halfWidth, 0, 1, availableHeight);
+                for (let i = 0; i < branchRatios.length; i++) {
+                    const branchWidth = (branchRatios[i] / totalWeight) * availableWidth;
+                    bufferCtx.fillStyle = getBranchColor(i);
+                    bufferCtx.fillRect(currentX, 0, branchWidth, availableHeight);
+                    
+                    // Add border between branches (except for the last one)
+                    if (i < branchRatios.length - 1) {
+                        bufferCtx.fillStyle = '#000000';
+                        bufferCtx.fillRect(currentX + branchWidth, 0, 1, availableHeight);
+                    }
+                    
+                    currentX += branchWidth;
+                }
             } else {
                 // When sort mode is not enabled, use the original behavior
                 bufferCtx.fillStyle = getBackgroundColor();
@@ -1554,13 +1563,13 @@
             }
         }
 
-        function drawSingleRow(rowIndex, rowCells, margin, availableWidth, availableHeight, sortRows) {
+        function drawSingleRow(rowIndex, rowCells, margin, availableWidth, availableHeight) {
             const rowHeight = getRowHeight(rowIndex, availableHeight);
             const y = margin + rowIndex * rowHeight;
             const cellHeight = rowHeight - 1;
 
-            // If sort mode is enabled, sort the cells by branch index before drawing
-            const cellsToDraw = sortRows ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
+            // Sort the cells by branch index if sort mode is enabled
+            const cellsToDraw = rowSortMode ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
 
             // Check if at least 90% of the cells would be less than 2px
             let smallCellCount = 0;
@@ -1628,20 +1637,23 @@
                 const remainingHeight = availableHeight - lastRowY;
                 
                 if (rowSortMode) {
-                    // When sort mode is enabled, draw left half one color, right half another color
-                    const halfWidth = availableWidth / 2;
+                    // When sort mode is enabled, draw branches proportionally by their weights
+                    const totalWeight = branchRatios.reduce((sum, weight) => sum + weight, 0);
+                    let currentX = margin;
                     
-                    // Left half - first color
-                    bufferCtx.fillStyle = getBranchColor(0);
-                    bufferCtx.fillRect(margin, lastRowY, halfWidth, remainingHeight);
-                    
-                    // Right half - second color (or first color if only one branch)
-                    bufferCtx.fillStyle = getBranchColor(1 % branchRatios.length);
-                    bufferCtx.fillRect(margin + halfWidth, lastRowY, halfWidth, remainingHeight);
-                    
-                    // Add border between halves
-                    bufferCtx.fillStyle = '#000000';
-                    bufferCtx.fillRect(margin + halfWidth, lastRowY, 1, remainingHeight);
+                    for (let i = 0; i < branchRatios.length; i++) {
+                        const branchWidth = (branchRatios[i] / totalWeight) * availableWidth;
+                        bufferCtx.fillStyle = getBranchColor(i);
+                        bufferCtx.fillRect(currentX, lastRowY, branchWidth, remainingHeight);
+                        
+                        // Add border between branches (except for the last one)
+                        if (i < branchRatios.length - 1) {
+                            bufferCtx.fillStyle = '#000000';
+                            bufferCtx.fillRect(currentX + branchWidth, lastRowY, 1, remainingHeight);
+                        }
+                        
+                        currentX += branchWidth;
+                    }
                 } else {
                     // When sort mode is not enabled, use the original behavior
                     bufferCtx.fillStyle = getBackgroundColor();

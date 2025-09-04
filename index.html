@@ -1168,6 +1168,8 @@
                 // Touch event
                 clientX = event.touches[0].clientX;
                 clientY = event.touches[0].clientY;
+                // Prevent default touch behavior to avoid scrolling during drag
+                event.preventDefault();
             } else {
                 // Mouse event
                 clientX = event.clientX;
@@ -1257,6 +1259,9 @@
 
                     // Immediately draw the line and icon at the new position
                     drawMouseLineOnForeground();
+                    
+                    // Prevent default touch behavior to avoid scrolling
+                    event.preventDefault();
                 }
 
                 // Check if we're clicking on a wall in row 1

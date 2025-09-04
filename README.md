@@ -12,7 +12,7 @@ See [http://mw.identity.pub/](http://mw.identity.pub/).
 
 The [many-worlds interpretation of quantum mechanics](https://en.wikipedia.org/wiki/Many-worlds_interpretation) says that the universe is, and only is, a vector in Hilbert space evolving deterministically according to the [Schrödinger equation](https://en.wikipedia.org/wiki/Schr%C3%B6dinger_equation).
 
-So why does quantum mechanics give us random numbers, e.g. with a [quantum coin flip](https://en.wikipedia.org/wiki/Quantum_coin_flipping)? Well, to put it simply, many-worlds says that this "randomness" is an illusion, and that actually, for each coin flip, the world branches into two worlds: one where you see a "heads", and one where you see a "tails".
+So why does quantum mechanics give us random numbers, e.g. with a [quantum coin flip](https://en.wikipedia.org/wiki/Quantum_coin_flipping)? Well, to put it simply, many-worlds says that this "randomness" is an illusion, and that actually, for each coin flip, the world branches into two worlds: one where you measure a "heads", and one where you measure a "tails".
 
 ### What am I looking at?
 
@@ -21,8 +21,9 @@ So why does quantum mechanics give us random numbers, e.g. with a [quantum coin 
     - A green world, representing heads
     - A blue world, representing tails
 - You are `𖨆`. (Your cursor.)
-- The vertical line, or "history", represents the sequence of coin flips you've observed
-- The "stats" area averages your sequence of coin flips
+- The vertical line represents the sequence of coin flips you've measured
+- "Your time" shows how many coin flips you've measured
+- "Your measurements" shows the counts and averages of the coin flips you've measured
 
 ### Advanced controls
 

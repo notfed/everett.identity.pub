@@ -10,7 +10,7 @@ See [http://mw.identity.pub/](http://mw.identity.pub/).
 
 ### Motivation
 
-The [many-worlds interpretation of quantum mechanics](https://en.wikipedia.org/wiki/Many-worlds_interpretation) says that the universe is deterministic. (I.e., that is is, and only is, a vector in Hilbert space evolving deterministically according to the [Schrödinger equation](https://en.wikipedia.org/wiki/Schr%C3%B6dinger_equation).)
+The [many-worlds interpretation of quantum mechanics](https://en.wikipedia.org/wiki/Many-worlds_interpretation) says that the universe is deterministic: i.e., it obeys [the Schrödinger equation](https://en.wikipedia.org/wiki/Schr%C3%B6dinger_equation).
 
 So why does quantum mechanics give us random numbers, e.g. with a [quantum coin flip](https://en.wikipedia.org/wiki/Quantum_coin_flipping)? Well, to put it simply, many-worlds says that this "randomness" is an illusion, and that actually, for each coin flip, the world branches into two worlds: one where you measure a "heads", and one where you measure a "tails".
 

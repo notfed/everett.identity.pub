@@ -14,7 +14,7 @@ The [many-worlds interpretation of quantum mechanics](https://en.wikipedia.org/w
 
 So why does quantum mechanics give us random numbers, e.g. with a [quantum coin flip](https://en.wikipedia.org/wiki/Quantum_coin_flipping)? Well, to put it simply, many-worlds says that this "randomness" is an illusion, and that actually, for each coin flip, the world branches into two worlds: one where you measure a "heads", and one where you measure a "tails".
 
-This is just a tool to help visualize how this happens. Specifically, the thing to notice is that, [almost all](https://en.wikipedia.org/wiki/Almost_all) "you"s see their samples converge to 50% heads and 50% tails (of course, we only collect a very limited number of samples in this simulation, but enough to see the trend).
+This is just a tool to help visualize how this happens. Specifically, the thing to notice is that, almost all "you"s see their samples converge to 50% heads and 50% tails (of course, we only collect a very limited number of samples in this simulation, but enough to see the trend).
 
 ### What am I looking at?
 

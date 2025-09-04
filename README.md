@@ -36,4 +36,4 @@ This tool is a visual demonstration of that idea. The key takeaway is that, for 
 | **↓**                  | See less time shown on-screen          |
 | **→**                  | Add a new branch                       |
 | **←**                  | Remove a branch                        |
-| **&lt;space&gt;**            | Sort rows (shows conservation)         |
+| **&lt;space&gt;**      | Sort rows (shows conservation)         |

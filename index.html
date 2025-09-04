@@ -332,7 +332,6 @@
         let tree = null;
         let rowsCompleted = 0;
         let rowSortMode = false;
-        let originalTree = null;
         let cursorTime = 48;
         let initTime = Date.now();
 
@@ -1346,19 +1345,7 @@
                     rowSortModeToggle.textContent = rowSortMode ? 'Sort Rows: ON' : 'Sort Rows: OFF';
                     rowSortModeToggle.classList.toggle('active', rowSortMode);
 
-                    if (rowSortMode) {
-                        // Enable sort mode - store original tree
-                        if (tree && tree.length > 0) {
-                            originalTree = JSON.parse(JSON.stringify(tree)); // Deep copy
-                            redrawAllRows();
-                        }
-                    } else {
-                        // Disable sort mode - restore original tree and redraw
-                        if (originalTree && tree.length > 0) {
-                            tree = JSON.parse(JSON.stringify(originalTree));
-                            redrawAllRows();
-                        }
-                    }
+                    redrawAllRows();
                     break;
             }
         }
@@ -1804,20 +1791,8 @@
                 rowSortModeToggle.textContent = rowSortMode ? 'Sort Rows: ON' : 'Sort Rows: OFF';
                 rowSortModeToggle.classList.toggle('active', rowSortMode);
 
-                if (rowSortMode) {
-                    // Enable sort mode - store original tree
-                    if (tree && tree.length > 0) {
-                        originalTree = JSON.parse(JSON.stringify(tree)); // Deep copy
-                        // Redraw all rows with sorting applied
-                        redrawAllRows();
-                    }
-                } else {
-                    // Disable sort mode - restore original tree and redraw
-                    if (originalTree && tree.length > 0) {
-                        tree = JSON.parse(JSON.stringify(originalTree));
-                        redrawAllRows();
-                    }
-                }
+                // Toggle sort mode - just redraw with current tree
+                redrawAllRows();
             });
 
             // Add mouse event listeners for the entire document to capture mouse movements and clicks anywhere

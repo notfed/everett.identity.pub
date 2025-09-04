@@ -1572,56 +1572,60 @@
             // Draw up to maxTime rows (the actual tree data we have)
             for (let rowIndex = 0; rowIndex < Math.min(tree.length, maxTime); rowIndex++) {
                 const rowCells = tree[rowIndex];
-                const rowHeight = getRowHeight(rowIndex, availableHeight);
-                const y = margin + rowIndex * rowHeight;
-                const cellHeight = rowHeight - 1;
+                drawSingleRow(rowIndex, rowCells, margin, availableWidth, availableHeight, rowSortMode);
+            }
+        }
 
-                // If sort mode is enabled, sort the cells by branch index before drawing
-                const cellsToDraw = rowSortMode ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
+        function drawSingleRow(rowIndex, rowCells, margin, availableWidth, availableHeight, sortRows) {
+            const rowHeight = getRowHeight(rowIndex, availableHeight);
+            const y = margin + rowIndex * rowHeight;
+            const cellHeight = rowHeight - 1;
 
-                // Check if at least 90% of the cells would be less than 2px
-                let smallCellCount = 0;
-                for (let cell of cellsToDraw) {
-                    const cellWidth = cell.width * availableWidth;
-                    if (cellWidth < 2) {
-                        smallCellCount++;
-                    }
+            // If sort mode is enabled, sort the cells by branch index before drawing
+            const cellsToDraw = sortRows ? [...rowCells].sort((a, b) => a.branchIndex - b.branchIndex) : rowCells;
+
+            // Check if at least 90% of the cells would be less than 2px
+            let smallCellCount = 0;
+            for (let cell of cellsToDraw) {
+                const cellWidth = cell.width * availableWidth;
+                if (cellWidth < 2) {
+                    smallCellCount++;
                 }
-                const hasSmallCells = smallCellCount >= cellsToDraw.length * 0.9;
+            }
+            const hasSmallCells = smallCellCount >= cellsToDraw.length * 0.9;
 
-                if (hasSmallCells) {
-                    // Use alternative drawing algorithm: 1px vertical lines
-                    drawRowWithVerticalLines(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
-                } else {
-                    // Use normal drawing algorithm
-                    drawRowWithNormalCells(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
+            if (hasSmallCells) {
+                // Use alternative drawing algorithm: 1px vertical lines
+                drawRowWithVerticalLines(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
+            } else {
+                // Use normal drawing algorithm
+                drawRowWithNormalCells(rowIndex, cellsToDraw, margin, availableWidth, availableHeight, y, cellHeight);
+            }
+
+            // Draw walls more prominently on row 1 (rowIndex === 0)
+            if (rowIndex === 0) {
+                let wallX = margin;
+                for (let i = 0; i < rowCells.length - 1; i++) {
+                    wallX += rowCells[i].width * availableWidth;
+
+                    // Draw a thicker, more visible wall
+                    bufferCtx.fillStyle = '#FF0000'; // Red color for walls
+                    bufferCtx.fillRect(wallX - 2, y, 4, cellHeight);
+
+                    // Add a subtle highlight to make it obvious it's draggable
+                    bufferCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    bufferCtx.fillRect(wallX - 1, y, 2, cellHeight);
                 }
+            }
 
-                // Draw walls more prominently on row 1 (rowIndex === 0)
-                if (rowIndex === 0) {
-                    let wallX = margin;
-                    for (let i = 0; i < rowCells.length - 1; i++) {
-                        wallX += rowCells[i].width * availableWidth;
+            // Draw horizontal line underneath the previous row
+            if (rowIndex > 0) {
+                const previousRowHeight = getRowHeight(rowIndex - 1, availableHeight);
+                const previousRowY = margin + (rowIndex - 1) * previousRowHeight;
+                const previousRowCellHeight = previousRowHeight - 1;
 
-                        // Draw a thicker, more visible wall
-                        bufferCtx.fillStyle = '#FF0000'; // Red color for walls
-                        bufferCtx.fillRect(wallX - 2, y, 4, cellHeight);
-
-                        // Add a subtle highlight to make it obvious it's draggable
-                        bufferCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-                        bufferCtx.fillRect(wallX - 1, y, 2, cellHeight);
-                    }
-                }
-
-                // Draw horizontal line underneath the previous row
-                if (rowIndex > 0) {
-                    const previousRowHeight = getRowHeight(rowIndex - 1, availableHeight);
-                    const previousRowY = margin + (rowIndex - 1) * previousRowHeight;
-                    const previousRowCellHeight = previousRowHeight - 1;
-
-                    bufferCtx.fillStyle = '#000000';
-                    bufferCtx.fillRect(margin, previousRowY + previousRowCellHeight, availableWidth, 1);
-                }
+                bufferCtx.fillStyle = '#000000';
+                bufferCtx.fillRect(margin, previousRowY + previousRowCellHeight, availableWidth, 1);
             }
         }
 
@@ -1668,58 +1672,6 @@
             }
         }
 
-        function redrawRowWithSorting(rowIndex, rowCells) {
-            if (!tree || rowIndex >= tree.length) return;
-
-            // Check if simulation was cancelled
-            if (simulationCancelled) return;
-
-            // Redraw all rows up to 128 - no early return needed
-
-            const margin = 0;
-            const availableWidth = canvas.width - 2 * margin;
-            const availableHeight = canvas.height - 2 * margin;
-            const rowHeight = getRowHeight(rowIndex, availableHeight);
-
-            const y = margin + rowIndex * rowHeight;
-            const cellHeight = rowHeight - 1;
-
-            // Clear the row area
-            bufferCtx.fillStyle = getBackgroundColor();
-            bufferCtx.fillRect(margin, y, availableWidth, cellHeight);
-
-            // Check if at least 90% of the cells would be less than 2px
-            let smallCellCount = 0;
-            for (let cell of rowCells) {
-                const cellWidth = cell.width * availableWidth;
-                if (cellWidth < 2) {
-                    smallCellCount++;
-                }
-            }
-            const hasSmallCells = smallCellCount >= rowCells.length * 0.9;
-
-            if (hasSmallCells) {
-                // Use alternative drawing algorithm: 1px vertical lines
-                drawRowWithVerticalLines(rowIndex, rowCells, margin, availableWidth, availableHeight, y, cellHeight);
-            } else {
-                // Use normal drawing algorithm
-                drawRowWithNormalCells(rowIndex, rowCells, margin, availableWidth, availableHeight, y, cellHeight);
-            }
-
-            // Draw horizontal line underneath the previous row
-            if (rowIndex > 0) {
-                const previousRowHeight = getRowHeight(rowIndex - 1, availableHeight);
-                const previousRowY = margin + (rowIndex - 1) * previousRowHeight;
-                const previousRowCellHeight = previousRowHeight - 1;
-
-                bufferCtx.fillStyle = '#000000';
-                bufferCtx.fillRect(margin, previousRowY + previousRowCellHeight, availableWidth, 1);
-            }
-
-            // Copy buffer to main canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(bufferCanvas, 0, 0);
-        }
 
         function findWallAtPosition(x, margin, availableHeight) {
             if (!tree || tree.length === 0) return -1;

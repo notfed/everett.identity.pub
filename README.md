@@ -5,7 +5,7 @@ See [http://mw.identity.pub/](http://mw.identity.pub/).
 <p>Preview:</p>
 
 <p align="center">
-<img src="ss.png" alt="alt text" width="500">
+<a href="http://mw.identity.pub/"><img src="ss.png" alt="alt text" width="500"></a>
 </p>
 
 ### Motivation

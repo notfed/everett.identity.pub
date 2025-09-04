@@ -216,6 +216,13 @@
             background-color: #636363;
             font-weight: bold;
             font-size: 14px;
+            /* Override global touch-action and user-select to enable mobile touch */
+            touch-action: auto;
+            user-select: auto;
+            -webkit-user-select: auto;
+            -moz-user-select: auto;
+            -ms-user-select: auto;
+            -webkit-touch-callout: default;
         }
 
         .help-link:hover {
@@ -1168,8 +1175,13 @@
                 // Touch event
                 clientX = event.touches[0].clientX;
                 clientY = event.touches[0].clientY;
-                // Prevent default touch behavior to avoid scrolling during drag
-                event.preventDefault();
+                
+                // Check if the touch target is the help link - if so, don't prevent default
+                const helpLink = document.querySelector('.help-link');
+                if (!(helpLink && (event.target === helpLink || helpLink.contains(event.target)))) {
+                    // Prevent default touch behavior to avoid scrolling during drag
+                    event.preventDefault();
+                }
             } else {
                 // Mouse event
                 clientX = event.clientX;
@@ -1248,6 +1260,13 @@
             if (event.button === 0 || event.type === 'touchstart') { // Left mouse button or touch
                 // For touch events, update coordinates immediately before starting drag
                 if (event.type === 'touchstart') {
+                    // Check if the touch target is the help link - if so, don't prevent default
+                    const helpLink = document.querySelector('.help-link');
+                    if (helpLink && (event.target === helpLink || helpLink.contains(event.target))) {
+                        // Allow the help link to work normally
+                        return;
+                    }
+
                     const rect = canvas.getBoundingClientRect();
                     const touch = event.touches[0];
                     const touchX = (touch.clientX - rect.left) * (canvas.width / rect.width);

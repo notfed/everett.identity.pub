@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>The Everett Multiverse</title>
+  <title>Many Worlds Explorer</title>
   <script src="https://cdn.jsdelivr.net/npm/decimal.js@10.4.3/decimal.min.js"></script>
   <script>
     // Configure Decimal.js for high precision
@@ -191,12 +191,35 @@ body, html {
     -moz-user-select: none;
     -ms-user-select: none;
     width: fit-content;
+    position: relative;
 }
 
 .stats-container h3 {
     margin: 0 0 6px 0;
     color: white;
     font-size: 13px;
+}
+
+.help-link {
+    position: absolute;
+    bottom: 5px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    text-decoration: none;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.help-link:hover {
+    background-color: rgba(255, 255, 255, 0.4);
 }
 
 .stats-branch-ratio-item {
@@ -298,6 +321,7 @@ body, html {
         <div style="color: white; font-family: Arial, sans-serif; font-size: 14px;">
           <span id="stats-cursor-time">17</span>
         </div>
+        <a href="https://github.com/notfed/everett.identity.pub" class="help-link" target="_blank">?</a>
       </div>
       <div class="input-container" style="display: none">
                   <label>Branch ratios (comma separated):</label><input type="text" id="branchRatios" value="0.5,0.5" style="width: 100px;">

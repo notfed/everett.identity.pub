@@ -415,8 +415,6 @@ let tree = null; // Store the tree structure for arc calculation
 let rowsCompleted = 0; // Track how many rows have been completed
 let rowSortMode = false; // Track whether "row sort" mode is enabled
 let originalTree = null; // Store the original unsorted tree structure
-let helpPopupProtected = true; // Flag to protect help popup for first 500ms
-console.log('Initial helpPopupProtected:', helpPopupProtected);
 let cursorTime = 48; // Current time based on cursor Y position
 let pageInitTime = null; // Track when page was initialized
 
@@ -611,6 +609,7 @@ function isPageInitDelayPassed() {
 function init() {
     // Set page initialization time
     pageInitTime = Date.now();
+    console.log("init");
     
     // Initialize input values from global variables
     document.getElementById('maxTime').value = maxTime;
@@ -1291,34 +1290,6 @@ function updateStatsFrequency(branches) {
     }
 }
 
-// Show help popup
-function showHelpPopup() {
-    console.log('showHelpPopup called');
-    const helpPopup = document.getElementById('help-container');
-    if (helpPopup) {
-        helpPopup.style.display = 'block';
-    }
-    
-    
-    // Protect popup for first 500ms
-    helpPopupProtected = true;
-    console.log('Help popup protected, setting timer for', HELP_POPUP_PROTECTION_DELAY, 'ms, constant value:', HELP_POPUP_PROTECTION_DELAY);
-    const timeoutId = setTimeout(() => {
-        console.log('Timeout callback executing...');
-        helpPopupProtected = false;
-        console.log('Help popup protection disabled, timeoutId:', timeoutId, 'helpPopupProtected now:', helpPopupProtected);
-    }, 500); // Using hardcoded value temporarily
-    console.log('Timeout set with ID:', timeoutId, 'for', HELP_POPUP_PROTECTION_DELAY, 'ms');
-}
-
-// Hide help popup
-function hideHelpPopup() {
-    console.log('hideHelpPopup called');
-    const helpPopup = document.getElementById('help-container');
-    if (helpPopup) {
-        helpPopup.style.display = 'none';
-    }
-}
 
 // Handle mouse movement anywhere on the page
 function handleMouseMove(event) {
@@ -1398,15 +1369,6 @@ function handleMouseMove(event) {
         } else {
             cursorTime = 128;
         }
-    }
-    
-    // Hide help popup when mouse moves (only if not protected)
-    console.log('Mouse move - helpPopupProtected:', helpPopupProtected);
-    if (!helpPopupProtected) {
-        console.log('Hiding help popup - protection disabled');
-        hideHelpPopup();
-    } else {
-        console.log('Help popup still protected, not hiding');
     }
 
     // Always draw the mouse line on foreground canvas regardless of position
@@ -2007,7 +1969,6 @@ window.addEventListener('resize', function() {
 // Initialize when page loads
 window.addEventListener('load', function() {
     init();
-    // showHelpPopup();
 });
 
 // Add event listeners for automatic updates

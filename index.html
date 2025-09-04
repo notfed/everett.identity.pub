@@ -1350,14 +1350,13 @@
                         // Enable sort mode - store original tree
                         if (tree && tree.length > 0) {
                             originalTree = JSON.parse(JSON.stringify(tree)); // Deep copy
-                            // Redraw all rows with sorting applied
-                            redrawAllRowsSorted();
+                            redrawAllRows();
                         }
                     } else {
                         // Disable sort mode - restore original tree and redraw
                         if (originalTree && tree.length > 0) {
                             tree = JSON.parse(JSON.stringify(originalTree));
-                            redrawAllRowsSorted();
+                            redrawAllRows();
                         }
                     }
                     break;
@@ -1524,7 +1523,7 @@
 
         }
 
-        function redrawAllRowsSorted() {
+        function redrawAllRows() {
             if (!tree || tree.length === 0) return;
 
             const margin = 0;
@@ -1537,10 +1536,7 @@
             // Step 2: Draw the actual tree rows (up to 128 rows, but with heights based on maxTime)
             drawTreeRows(margin, availableWidth, availableHeight);
 
-            // Step 3: Fill any remaining space below the tree rows
-            fillRemainingSpaceBelowTree(margin, availableWidth, availableHeight);
-
-            // Step 4: Copy buffer to main canvas
+            // Step 3: Copy buffer to main canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(bufferCanvas, 0, 0);
         }
@@ -1813,13 +1809,13 @@
                     if (tree && tree.length > 0) {
                         originalTree = JSON.parse(JSON.stringify(tree)); // Deep copy
                         // Redraw all rows with sorting applied
-                        redrawAllRowsSorted();
+                        redrawAllRows();
                     }
                 } else {
                     // Disable sort mode - restore original tree and redraw
                     if (originalTree && tree.length > 0) {
                         tree = JSON.parse(JSON.stringify(originalTree));
-                        redrawAllRowsSorted();
+                        redrawAllRows();
                     }
                 }
             });

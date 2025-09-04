@@ -626,17 +626,10 @@ function drawInitialLine() {
 
 // Draw explanatory text and arrows to help users understand the interface
 function drawExplanatoryElements() {
-    // Clear any existing explanatory elements
     clearExplanatoryElements();
-    
-    // 1. "You are here" text with curved arrow pointing to the cursor
-    drawYouAreHere();
-    
-    // 2. "Your history" text with curved arrow pointing to the history line
-    drawYourHistory();
-    
-    // 3. "Your stats" text with curved arrow pointing to the stats container
     drawYourStats();
+    drawYouAreHere();
+    drawYourHistory();
 }
 
 // Draw "You are here" text with curved arrow pointing to the cursor

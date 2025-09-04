@@ -14,7 +14,7 @@ The [many-worlds interpretation of quantum mechanics](https://en.wikipedia.org/w
 
 So how do we end up with random numbers, for example with [quantum coin flips](https://en.wikipedia.org/wiki/Quantum_coin_flipping)? Well, to put it simply, many-worlds says that after each coin flip there's a world where you see `heads` and a world where you see `tails`, resulting in an illusion of randomness. This tool is a simulation to help develop an intuition for how this works.
 
-The key takeaway is that, for almost every possible "you," the measured outcome converges to _50% `heads` and 50% `tails`_ as you collect more samples. Try slowly dragging from the top to prove to yourself that it's actually counting correctly.
+The key takeaway is that, for almost every possible "you," the measured outcome converges to **50% `heads` and 50% `tails`** as you collect more samples. Try slowly dragging from the top to prove to yourself that it's actually counting correctly.
 
 ### What am I looking at?
 

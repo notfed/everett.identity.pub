@@ -31,7 +31,7 @@ This tool is a visual demonstration of that idea. The key takeaway is that, for 
 | Press...               | To...                                  |
 |------------------------|----------------------------------------|
 | **Click and drag**     | Constrain yourself to one timeline     |
-| **Drag the red line**  | Adjust the branch ratio                |
+| **Drag the top row's center line**  | Adjust the branch ratio                |
 | **↑**                  | See more time shown on-screen          |
 | **↓**                  | See less time shown on-screen          |
 | **→**                  | Add a new branch                       |

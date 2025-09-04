@@ -703,7 +703,7 @@ function drawYouAreHere() {
 // Draw "Your history" text with curved arrow pointing to the history line
 function drawYourHistory() {
     const text = "Your history";
-    const textX = mouseX - 20;
+    const textX = mouseX + 20;
     const textY = mouseY - 40;
     
     foregroundCtx.save();
@@ -711,13 +711,13 @@ function drawYourHistory() {
     foregroundCtx.lineWidth = 3;
     foregroundCtx.fillStyle = '#000';
     foregroundCtx.font = 'bold 16px Arial';
-    foregroundCtx.textAlign = 'right';
+    foregroundCtx.textAlign = 'left';
     
     // Draw white background for text readability
     const textMetrics = foregroundCtx.measureText(text);
     const padding = 4;
     foregroundCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    const foregroundCtxX = textX - textMetrics.width - padding;
+    const foregroundCtxX = textX - padding;
     const foregroundCtxY = textY - textMetrics.actualBoundingBoxAscent - padding;
     const foregroundCtxWidth = textMetrics.width + 2 * padding;
     const foregroundCtxHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent + 2 * padding;
@@ -732,7 +732,7 @@ function drawYourHistory() {
     foregroundCtx.fillText(text, textX, textY);
     
     // Draw curved arrow pointing upward along the history line
-    const arrowStartX = foregroundCtxX+foregroundCtxWidth*0.75;
+    const arrowStartX = foregroundCtxX + foregroundCtxWidth * 0.25;
     const arrowStartY = textY - 20;
     const arrowEndX = mouseX;
     const arrowEndY = mouseY - 130;
